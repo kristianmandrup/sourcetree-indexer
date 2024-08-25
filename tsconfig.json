@@ -11,6 +11,6 @@
     "outDir": "./dist", // Redirect output structure to the directory
     "rootDir": "./src" // Specify the root directory of input files
   },
-  "include": ["src/**/*", "@types/**/*"], // Include files in src and @types directories
+  "include": ["src/**/*"], // Include files in src and @types directories
   "exclude": ["node_modules", "dist"] // Exclude directories and files
 }

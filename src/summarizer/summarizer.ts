@@ -19,6 +19,7 @@ export class AISummarizer {
   }
 
   async summarize(text: string): Promise<string | undefined> {
-    return this.summarizer.summarize(text);
+    if (text.trim() === "") return "";
+    return await this.summarizer.summarize(text);
   }
 }

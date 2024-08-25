@@ -25,11 +25,14 @@ export class OpenAISummarizer implements Summarizer {
   }
 
   public async summarize(text: string): Promise<string | undefined> {
+    if (text.trim() === "") return "";
     const prompt = `Please provide a concise and clear summary of the following text:\n\n"${text}"`;
+    console.log("prompt", prompt);
     const response = await this.model.invoke([new HumanMessage(prompt)]);
     if (response instanceof AIMessage) {
       const { content } = response;
       const message = content[0];
+      console.log("OpenAI response message", message);
       if (typeof message === "string") {
         return message.trim();
       } else {

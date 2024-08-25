@@ -12,12 +12,14 @@ export class OllamaSummarizer implements Summarizer {
 
   public async summarize(text: string): Promise<string | undefined> {
     const prompt = `Please provide a concise and clear summary of the following text:\n\n"${text}"`;
+    console.log("prompt", prompt);
     const response = await this.model.invoke(["human", prompt]);
     const { content } = response;
+    console.log(content);
     if (content.length > 0) {
-      const message = content[0];
-      if (typeof message === "string") {
-        return message.trim();
+      console.log("Ollama AI response message", content);
+      if (typeof content === "string") {
+        return content.trim();
       }
     } else {
       throw new Error("Unexpected response format from Ollama model.");

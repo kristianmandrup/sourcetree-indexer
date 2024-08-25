@@ -6,8 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node ./dist/index.js",
-    "prepare": "npm run build",
-    "openai:test": "ts-node src/summarizer/openai.ts"
+    "prepare": "npm run build"
   },
   "bin": {
     "generate-index-md": "./src/generate-index.ts"

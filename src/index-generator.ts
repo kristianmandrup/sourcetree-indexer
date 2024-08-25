@@ -1,79 +1,105 @@
 import fs from "fs-extra";
-import { AISummarizer, Summarizer } from "./summarizer/summarizer";
 import path from "path";
+import { Summarizer } from "./summarizer/summarizer";
 import {
   FunctionOrClassSummary,
-  readFileSummary,
+  FileSummarizer,
   SUPPORTED_EXTENSIONS,
 } from "./summarizer/read-file-summary";
 
-const generateIndexMd = async (dirPath: string, summarizer: Summarizer) => {
-  const indexEntries: string[] = [];
-  await processDirectory(dirPath, summarizer, indexEntries);
-  const indexPath = path.join(dirPath, "Index.md");
-  fs.writeFileSync(indexPath, indexEntries.join("\n\n"));
+export const generateIndexMd = async (
+  dirPath: string,
+  summarizer: Summarizer
+) => {
+  new IndexGenerator(summarizer).generateIndexMd(dirPath);
 };
 
-const processDirectory = async (
-  dirPath: string,
-  summarizer: Summarizer,
-  indexEntries: string[]
-) => {
-  const files = fs.readdirSync(dirPath);
+class IndexGenerator {
+  private summarizer: Summarizer;
+  private fileSummarizer: FileSummarizer;
 
-  for (const file of files) {
-    const fullPath = path.join(dirPath, file);
-    const stats = fs.statSync(fullPath);
+  constructor(summarizer: Summarizer) {
+    this.summarizer = summarizer;
+    this.fileSummarizer = new FileSummarizer(summarizer);
+  }
 
-    if (stats.isDirectory()) {
-      await processDirectory(fullPath, summarizer, indexEntries);
-      indexEntries.push(`## folder : ${file}`);
-      await appendSubIndex(fullPath, indexEntries);
-    } else if (SUPPORTED_EXTENSIONS.includes(path.extname(file))) {
-      await processFile(fullPath, summarizer, indexEntries, file);
+  public async generateIndexMd(dirPath: string) {
+    await this.processDirectory(dirPath);
+  }
+
+  private async processDirectory(dirPath: string) {
+    console.log("processing", dirPath);
+    const indexEntries: string[] = [];
+    const files = fs.readdirSync(dirPath);
+
+    for (const file of files) {
+      const fullPath = path.join(dirPath, file);
+      const stats = fs.statSync(fullPath);
+
+      if (stats.isDirectory()) {
+        indexEntries.push(`## folder : ${file}`);
+        await this.processDirectory(fullPath); // Recursively process subdirectory
+        await this.appendSubIndex(fullPath, indexEntries);
+      } else if (SUPPORTED_EXTENSIONS.includes(path.extname(file))) {
+        await this.processFile(fullPath, indexEntries, file);
+      }
+    }
+
+    const indexPath = path.join(dirPath, ".Index.md");
+    console.log("writing to", indexPath);
+    fs.writeFileSync(indexPath, indexEntries.join("\n\n")); // Write .Index.md for the current directory
+  }
+
+  private async appendSubIndex(fullPath: string, indexEntries: string[]) {
+    const subIndexPath = path.join(fullPath, ".Index.md");
+    if (fs.existsSync(subIndexPath)) {
+      const subIndexContent = fs.readFileSync(subIndexPath, "utf8");
+      console.log("summarizing", subIndexPath);
+      const aiSummary = await this.summarizer.summarize(subIndexContent);
+      console.log("aiSummary:", aiSummary, "for", subIndexPath, "with:");
+      console.log(subIndexContent);
+      indexEntries.push(`${path.basename(fullPath)}: ${aiSummary}`);
     }
   }
-};
 
-const appendSubIndex = async (fullPath: string, indexEntries: string[]) => {
-  const subIndexPath = path.join(fullPath, "Index.md");
-  if (fs.existsSync(subIndexPath)) {
-    const subIndexContent = fs.readFileSync(subIndexPath, "utf8");
-    indexEntries.push(subIndexContent);
+  private async processFile(
+    fullPath: string,
+    indexEntries: string[],
+    fileName: string
+  ) {
+    indexEntries.push(`## file : ${fileName}`);
+    const summaries = await this.fileSummarizer.readFileSummary(fullPath);
+    console.log({ summaries });
+    await this.generateFileSummary(summaries, indexEntries);
   }
-};
 
-const processFile = async (
-  fullPath: string,
-  summarizer: Summarizer,
-  indexEntries: string[],
-  fileName: string
-) => {
-  indexEntries.push(`## file : ${fileName}`);
-  const summaries = await readFileSummary(fullPath, summarizer);
-  await generateFileSummary(summaries, summarizer, indexEntries);
-};
+  private async generateFileSummary(
+    summaries: FunctionOrClassSummary[],
+    indexEntries: string[]
+  ) {
+    for (const summary of summaries) {
+      const aiSummary = await this.summarizer.summarize(
+        `${summary.name}: ${summary.summary}`
+      );
+      indexEntries.push(`- ${summary.name}: ${aiSummary}`);
 
-const generateFileSummary = async (
-  summaries: FunctionOrClassSummary[],
-  summarizer: Summarizer,
-  indexEntries: string[]
-) => {
-  for (const summary of summaries) {
-    const aiSummary = await summarizer.summarize(
-      `${summary.name}: ${summary.summary}`
-    );
-    indexEntries.push(`- ${summary.name}: ${aiSummary}`);
-
-    if (summary.methods) {
-      for (const method of summary.methods) {
-        const aiMethodSummary = await summarizer.summarize(
-          `${method.name}: ${method.summary}`
-        );
-        indexEntries.push(`  - ${method.name}: ${aiMethodSummary}`);
+      if (summary.methods) {
+        await this.addMethodSummaries(summary.methods, indexEntries);
       }
     }
   }
-};
 
-export { generateIndexMd };
+  private async addMethodSummaries(
+    methods: { name: string; summary: string }[],
+    indexEntries: string[]
+  ) {
+    for (const method of methods) {
+      const aiMethodSummary = await this.summarizer.summarize(
+        `${method.name}: ${method.summary}`
+      );
+      indexEntries.push(`  - ${method.name}: ${aiMethodSummary}`);
+    }
+  }
+}
+
+export { IndexGenerator };

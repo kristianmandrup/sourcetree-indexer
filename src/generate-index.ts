@@ -11,26 +11,26 @@ program
   .argument("<dirPath>", "Directory path to process")
   .option(
     "-a, --apiKey <apiKey>",
-    "API key for the summarizer service",
+    "API key for the summarizer service (currently only for OpenAI)",
     process.env.OPENAI_API_KEY || ""
   )
-  .option("-m, --model <model>", "Model name for OpenAI (optional)")
+  .option("-m, --model <model>", "Model name")
   .option(
     "-s, --service <service>",
     'Summarizer service: "openai" or "ollama"',
     "openai"
   )
   .action(async (dirPath, options) => {
-    if (!options.apiKey) {
-      console.error("API key is required.");
-      process.exit(1);
-    }
-
     let summarizer;
     if (options.service === "openai") {
-      summarizer = new OpenAISummarizer(options.apiKey, options.model);
+      if (!options.apiKey) {
+        console.error("API key is required for OpenAI");
+        process.exit(1);
+      }
+
+      summarizer = new OpenAISummarizer(options.model, options.apiKey);
     } else if (options.service === "ollama") {
-      summarizer = new OllamaSummarizer(options.apiKey);
+      summarizer = new OllamaSummarizer(options.model);
     } else {
       console.error('Invalid summarizer service. Use "openai" or "ollama".');
       process.exit(1);

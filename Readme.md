@@ -12,6 +12,13 @@ To run and test locally: Build and link
 
 ```bash
 pnpm build
+```
+
+`node dist/generate-index.js ./data --service ollama --model phi3:14b`
+
+Link to install package on your system
+
+```bash
 pnpm link
 ```
 
@@ -21,6 +28,8 @@ If you want to use OpenAI, define a key in a `.env` file (see `.env.example`)
 
 ### OpenAI
 
+See [Available models](https://platform.openai.com/docs/models) here
+
 Run with OpenAI model
 
 ```bash
@@ -29,8 +38,16 @@ generate-index-md <dirPath> --apiKey <your-api-key> --service openai --model gpt
 
 ### Ollama
 
+Running with [phi3:14b](https://ollama.com/library/phi3:14b) open AI model from MicroSoft
+
+```bash
+ollama serve
+ollama pull phi3:14b
+ollama run phi3:14b
+```
+
 Run with Ollama model
 
 ```bash
-generate-index-md <dirPath> --apiKey <your-api-key> --service ollama
+generate-index-md <dirPath> --apiKey <your-api-key> --service ollama --model phi3:14b
 ```

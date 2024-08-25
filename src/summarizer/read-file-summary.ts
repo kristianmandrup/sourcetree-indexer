@@ -1,86 +1,144 @@
-import path from "path";
-import { Node, Project, SyntaxKind } from "ts-morph";
+import path from "node:path";
+import {
+  Project,
+  SyntaxKind,
+  ClassDeclaration,
+  FunctionDeclaration,
+  // MethodDeclaration,
+  // VariableStatement,
+  SourceFile,
+} from "ts-morph";
 import { parse } from "comment-parser";
 import { Summarizer } from "./summarizer";
 
 // Constants
 export const SUPPORTED_EXTENSIONS = [".js", ".ts", ".jsx", ".tsx"];
 
-// Interfaces
 export interface FunctionOrClassSummary {
   name: string;
   summary: string;
   methods?: FunctionOrClassSummary[];
 }
 
-const extractJsDocDescription = (jsDocText: string): string => {
-  const parsed = parse(jsDocText);
-  return parsed.length > 0
-    ? parsed[0].description || "No summary available."
-    : "No summary available.";
-};
+class FileSummarizer {
+  private summarizer: Summarizer;
 
-// Utility function to determine if a node is a function or class declaration
-const isFunctionOrClassDeclaration = (node: Node): boolean =>
-  node.getKind() === SyntaxKind.FunctionDeclaration ||
-  node.getKind() === SyntaxKind.ClassDeclaration;
-
-// Function to generate summaries for functions and classes
-const summarizeNode = async (
-  node: Node,
-  summarizer: Summarizer
-): Promise<FunctionOrClassSummary | null> => {
-  const name = node.getSymbol()?.getName();
-  const docSummary = extractJsDocDescription(node.getText());
-
-  // Use AI to generate a more detailed summary
-  const aiSummary = await summarizer.summarize(docSummary);
-
-  if (!name || !aiSummary) return null;
-
-  const entry: FunctionOrClassSummary = { name, summary: aiSummary };
-
-  // Handle method declarations if the node is a class
-  if (node.getKind() === SyntaxKind.ClassDeclaration) {
-    const methods = node
-      .getChildrenOfKind(SyntaxKind.MethodDeclaration)
-      .map(async (methodNode) => {
-        const methodName = methodNode.getSymbol()?.getName();
-        const methodDocSummary = extractJsDocDescription(methodNode.getText());
-        const methodAiSummary = await summarizer.summarize(methodDocSummary);
-        return methodName && methodAiSummary
-          ? { name: methodName, summary: methodAiSummary }
-          : null;
-      });
-
-    // Wait for all method summaries to resolve
-    entry.methods = (await Promise.all(methods)).filter(
-      Boolean
-    ) as FunctionOrClassSummary[];
+  constructor(summarizer: Summarizer) {
+    this.summarizer = summarizer;
   }
 
-  return entry;
-};
+  private extractJsDocDescription(jsDocText: string): string {
+    const parsed = parse(jsDocText);
+    return parsed.length > 0
+      ? parsed[0].description || "No summary available."
+      : "No summary available.";
+  }
 
-// Function to summarize a file's content
-export const readFileSummary = async (
-  filePath: string,
-  summarizer: Summarizer
-): Promise<FunctionOrClassSummary[]> => {
-  const ext = path.extname(filePath);
-  if (!SUPPORTED_EXTENSIONS.includes(ext)) return [];
+  private async summarizeNode(
+    node: ClassDeclaration | FunctionDeclaration
+  ): Promise<FunctionOrClassSummary | null> {
+    const name = node.getSymbol()?.getName();
+    const docSummary = this.extractJsDocDescription(node.getText());
 
-  const project = new Project();
-  const sourceFile = project.addSourceFileAtPath(filePath);
+    const aiDocSummary = ""; // await this.summarizer.summarize(docSummary);
+    const aiNodeSummary = await this.summarizer.summarize(node.getText());
 
-  const summaries: FunctionOrClassSummary[] = [];
+    console.log({ name, docSummary, aiNodeSummary });
 
-  for (const node of sourceFile.getChildren()) {
-    if (isFunctionOrClassDeclaration(node)) {
-      const summary = await summarizeNode(node, summarizer);
-      if (summary) summaries.push(summary);
+    if (!name || (!aiDocSummary && !aiNodeSummary)) {
+      console.log("skipped node summary");
+      return null;
     }
+    let summary = aiNodeSummary;
+    const combined = aiDocSummary
+      ? [aiDocSummary, aiNodeSummary].join("")
+      : undefined;
+    summary = combined
+      ? (await this.summarizer.summarize(combined)) + ""
+      : summary + "";
+
+    const entry: FunctionOrClassSummary = { name, summary };
+
+    if (node.getKind() === SyntaxKind.ClassDeclaration) {
+      const methods = (node as ClassDeclaration)
+        .getMethods()
+        .filter((method) => method.getScope() === "public")
+        .map(async (methodNode) => {
+          const methodName = methodNode.getSymbol()?.getName();
+          const methodDocSummary = this.extractJsDocDescription(
+            methodNode.getText()
+          );
+          const methodAiSummary = await this.summarizer.summarize(
+            methodDocSummary
+          );
+          return methodName && methodAiSummary
+            ? { name: methodName, summary: methodAiSummary }
+            : null;
+        });
+
+      entry.methods = (await Promise.all(methods)).filter(
+        Boolean
+      ) as FunctionOrClassSummary[];
+    }
+
+    return entry;
   }
 
-  return summaries;
-};
+  async getFunctionSummaries(sourceFile: SourceFile) {
+    const summaries: FunctionOrClassSummary[] = [];
+
+    // Extract exported functions
+    for (const func of sourceFile.getFunctions()) {
+      console.log("function", func.getName());
+      if (func.isExported()) {
+        const summary = await this.summarizeNode(func);
+        if (summary) summaries.push(summary);
+      } else {
+        console.log("not exported");
+      }
+    }
+
+    console.log("FUNCTIONS", summaries);
+    return summaries;
+  }
+
+  async getClassSummaries(sourceFile: SourceFile) {
+    const summaries: FunctionOrClassSummary[] = [];
+
+    // Extract exported classes
+    for (const cls of sourceFile.getClasses()) {
+      console.log("class", cls.getName());
+      if (cls.isExported()) {
+        const summary = await this.summarizeNode(cls);
+        if (summary) summaries.push(summary);
+      } else {
+        console.log("not exported");
+      }
+    }
+
+    console.log("CLASSES", summaries);
+
+    return summaries;
+  }
+
+  public async readFileSummary(
+    filePath: string
+  ): Promise<FunctionOrClassSummary[]> {
+    const ext = path.extname(filePath);
+    if (!SUPPORTED_EXTENSIONS.includes(ext)) {
+      console.log("file summary skipped", filePath, ext);
+      return [];
+    }
+
+    console.log("read file summary for", filePath);
+    const project = new Project();
+    const sourceFile = project.addSourceFileAtPath(filePath);
+
+    const functionSummaries = await this.getFunctionSummaries(sourceFile);
+    const classSummaries = await this.getFunctionSummaries(sourceFile);
+
+    return [...functionSummaries, ...classSummaries];
+  }
+}
+
+export { FileSummarizer };
