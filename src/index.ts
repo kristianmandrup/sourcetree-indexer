@@ -1,3 +1,2 @@
-export * from "./index-md/index-generator";
+export * from "./index-md";
 export * from "./generate";
-export * from "./index-md/summarizer";
