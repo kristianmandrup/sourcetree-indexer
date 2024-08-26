@@ -10,17 +10,20 @@ export class OllamaSummarizer implements Summarizer {
     });
   }
 
-  public async summarize(text: string): Promise<string | undefined> {
-    const prompt = `Please provide a concise and clear summary of the following text:\n\n"${text}"`;
-    console.log("prompt", prompt);
+  private createPrompt(question: string, text: string) {
+    return `${question} (keep it very brief and to the point):\n\n"${text}"`;
+  }
+
+  public async summarize(text: string, question?: string): Promise<string> {
+    const defaultQuestion = `Please provide a concise and clear summary of the following`;
+    const prompt = this.createPrompt(question || defaultQuestion, text);
     const response = await this.model.invoke(["human", prompt]);
     const { content } = response;
-    console.log(content);
     if (content.length > 0) {
-      console.log("Ollama AI response message", content);
       if (typeof content === "string") {
         return content.trim();
       }
+      return "";
     } else {
       throw new Error("Unexpected response format from Ollama model.");
     }

@@ -2,7 +2,7 @@ import { OpenAISummarizer } from "./openai-summarizer";
 import { OllamaSummarizer } from "./ollama-summarizer";
 
 export interface Summarizer {
-  summarize(text: string): Promise<string | undefined>;
+  summarize(text: string, prompt?: string): Promise<string>;
 }
 
 export class AISummarizer {
@@ -18,8 +18,8 @@ export class AISummarizer {
     }
   }
 
-  async summarize(text: string): Promise<string | undefined> {
+  async summarize(text: string): Promise<string> {
     if (text.trim() === "") return "";
-    return await this.summarizer.summarize(text);
+    return (await this.summarizer.summarize(text)) + "";
   }
 }

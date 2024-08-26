@@ -38,7 +38,6 @@ program
 
     try {
       await generateIndexMd(dirPath, summarizer);
-      console.log("Index.md files generated successfully.");
     } catch (error) {
       console.error("Error generating Index.md files:", error);
       process.exit(1);

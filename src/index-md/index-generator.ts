@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import { Summarizer } from "./summarizer/summarizer";
 import {
-  FunctionOrClassSummary,
+  NodeSummary,
   FileSummarizer,
   SUPPORTED_EXTENSIONS,
 } from "./summarizer/read-file-summary";
@@ -46,7 +46,6 @@ class IndexGenerator {
     }
 
     const indexPath = path.join(dirPath, ".Index.md");
-    console.log("writing to", indexPath);
     fs.writeFileSync(indexPath, indexEntries.join("\n\n")); // Write .Index.md for the current directory
   }
 
@@ -54,11 +53,8 @@ class IndexGenerator {
     const subIndexPath = path.join(fullPath, ".Index.md");
     if (fs.existsSync(subIndexPath)) {
       const subIndexContent = fs.readFileSync(subIndexPath, "utf8");
-      console.log("summarizing", subIndexPath);
       const aiSummary = await this.summarizer.summarize(subIndexContent);
-      console.log("aiSummary:", aiSummary, "for", subIndexPath, "with:");
-      console.log(subIndexContent);
-      indexEntries.push(`${path.basename(fullPath)}: ${aiSummary}`);
+      indexEntries.push(aiSummary);
     }
   }
 
@@ -69,19 +65,16 @@ class IndexGenerator {
   ) {
     indexEntries.push(`## file : ${fileName}`);
     const summaries = await this.fileSummarizer.readFileSummary(fullPath);
-    console.log({ summaries });
     await this.generateFileSummary(summaries, indexEntries);
   }
 
   private async generateFileSummary(
-    summaries: FunctionOrClassSummary[],
+    summaries: NodeSummary[],
     indexEntries: string[]
   ) {
     for (const summary of summaries) {
-      const aiSummary = await this.summarizer.summarize(
-        `${summary.name}: ${summary.summary}`
-      );
-      indexEntries.push(`- ${summary.name}: ${aiSummary}`);
+      indexEntries.push(`### ${summary.name}`);
+      indexEntries.push(`${summary.text}`);
 
       if (summary.methods) {
         await this.addMethodSummaries(summary.methods, indexEntries);
@@ -90,14 +83,11 @@ class IndexGenerator {
   }
 
   private async addMethodSummaries(
-    methods: { name: string; summary: string }[],
+    methods: { name: string; text: string }[],
     indexEntries: string[]
   ) {
     for (const method of methods) {
-      const aiMethodSummary = await this.summarizer.summarize(
-        `${method.name}: ${method.summary}`
-      );
-      indexEntries.push(`  - ${method.name}: ${aiMethodSummary}`);
+      indexEntries.push(`- ${method.name}: ${method.text}`);
     }
   }
 }
