@@ -94,6 +94,35 @@ generate-index-md ./data/parser --service ollama --model phi3:mini
 
 ## TODO
 
-- Code complexity (0-5 Very Low to Very High)
-- Refactoring suggestions
+- Add more run options (TOC, force, analysis)
+- Turn `file` header into separate summary type with `processFileSummary` method
+- By default it should only process files in a folder modified/created since last timestamp (use `force` option to process all)
+- Add meta data at the top of each file (`timestamp`, `tags`) using YAML frontmatter
+- Cleanup option to delete all `.Index.md` files
+- For each entry if `analysis` is turned on
+
+  - Complexity analysis
+    - Code entry complexity : 0-5 - Very Low (1), Low (2), Medium (3), High (4), Very High (5)
+    - File complexity: summarized complexity score based on number of entries and their complexity
+    - Folder complexity: depending on the number of files and subfolders and the total complexity of each
+  - Refactoring suggestions
+    - Entry
+    - File
+    - Folder
+
 - VS Code plugin
+
+### Metadata
+
+Use [YAML frontmatter](https://github.blog/news-insights/product-news/viewing-yaml-metadata-in-your-documents/)
+How to [parse](https://peterbabic.dev/blog/yaml-metadata-in-markdown/) via:
+
+- [remark-frontmatter](https://www.npmjs.com/package/remark-frontmatter) for full markdown parsing if needed
+- [frontmatter](https://www.npmjs.com/package/frontmatter) for just the frontmatter
+
+```md
+---
+layout: post
+title: Blogging Like a Hacker
+---
+```

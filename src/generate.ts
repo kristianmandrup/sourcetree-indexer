@@ -12,12 +12,19 @@ program
     "API key for the summarizer service (currently only for OpenAI)",
     process.env.OPENAI_API_KEY || ""
   )
-  .option("-m, --model <model>", "Model name")
+  .option("-m, --model <model>", "Model name", "phi3:mini")
   .option(
     "-s, --service <service>",
     'Summarizer service: "openai" or "ollama"',
-    "openai"
+    "ollama"
   )
+  .option("-t, --toc", "Table of Contents", true)
+  .option(
+    "-a, --analysis",
+    "Perform code analysis and provide improvement suggestions",
+    false
+  )
+  .option("-f, --force", "Force processing of all files", false)
   .action(async (dirPath, options) => {
     let summarizer;
     if (options.service === "openai") {
