@@ -4,8 +4,6 @@ import {
   SyntaxKind,
   ClassDeclaration,
   FunctionDeclaration,
-  // MethodDeclaration,
-  // VariableStatement,
   SourceFile,
   VariableDeclaration,
   MethodDeclaration,
@@ -22,13 +20,14 @@ export interface NodeSummary {
   methods?: NodeSummary[];
 }
 
-export type JsdocNode = ClassDeclaration | FunctionDeclaration;
+export type JsDocNode = ClassDeclaration | FunctionDeclaration;
 
-export type SummarizableNode =
+export type ExportableNode =
   | ClassDeclaration
   | FunctionDeclaration
-  | VariableDeclaration
-  | MethodDeclaration;
+  | VariableDeclaration;
+
+export type SummarizableNode = ExportableNode | MethodDeclaration;
 
 class FileSummarizer {
   private summarizer: Summarizer;
@@ -37,22 +36,41 @@ class FileSummarizer {
     this.summarizer = summarizer;
   }
 
-  private extractJsDocDescription(jsDocText: string): string {
-    const parsed = parse(jsDocText);
-    return parsed.length > 0
-      ? parsed[0].description || "No summary available."
-      : "No summary available.";
+  private getSourceFile(filePath: string): SourceFile {
+    const project = new Project();
+    return project.addSourceFileAtPath(filePath);
   }
 
-  mayHaveJsDoc(node: SummarizableNode) {
+  private validateExt(filePath: string): boolean {
+    const ext = path.extname(filePath);
+    return SUPPORTED_EXTENSIONS.includes(ext);
+  }
+
+  private isClass(node: SummarizableNode): boolean {
+    return node.getKind() === SyntaxKind.ClassDeclaration;
+  }
+
+  private combineNodeSummary(
+    docSummary: string,
+    aiNodeSummary: string
+  ): string {
+    return docSummary ? [docSummary, aiNodeSummary].join("\n") : aiNodeSummary;
+  }
+
+  private extractJsDocDescription(jsDocText: string): string {
+    const parsed = parse(jsDocText);
+    return parsed.length > 0 ? parsed[0].description || "" : "";
+  }
+
+  private mayHaveJsDoc(node: SummarizableNode): boolean {
     return (
       node instanceof FunctionDeclaration || node instanceof ClassDeclaration
     );
   }
 
-  private getJsDoc(node: SummarizableNode) {
+  private getJsDoc(node: SummarizableNode): string {
     if (!this.mayHaveJsDoc(node)) return "";
-    const jsDocs = node
+    const jsDocs = (node as JsDocNode)
       .getJsDocs()
       .map((doc) => doc.getDescription())
       .join("\n");
@@ -60,117 +78,77 @@ class FileSummarizer {
   }
 
   private async summarizeNode(
-    sourceFile: SourceFile,
     node: SummarizableNode
   ): Promise<NodeSummary | undefined> {
     const name = node.getName();
     const docSummary = this.getJsDoc(node);
     const code = node.getText();
-    const aiDocSummary = docSummary;
     const aiNodeSummary = await this.summarizer.summarize(
       code,
       "Write a brief single sentence documentation summary of the purpose of the following:"
     );
 
-    if (!name || (!aiDocSummary && !aiNodeSummary)) {
-      return;
-    }
-    let summary = aiNodeSummary;
-    const combined = aiDocSummary
-      ? [aiDocSummary, aiNodeSummary].join("\n")
-      : undefined;
-    summary = combined
-      ? (await this.summarizer.summarize(combined)) + ""
-      : summary + "";
+    if (!name || (!docSummary && !aiNodeSummary)) return undefined;
 
+    const summary = this.combineNodeSummary(docSummary, aiNodeSummary);
     const entry: NodeSummary = { name, text: summary };
 
-    if (node.getKind() === SyntaxKind.ClassDeclaration) {
-      const methods = (node as ClassDeclaration)
-        .getMethods()
-        .filter((method) => method.getScope() === "public")
-        .map(async (methodNode) => {
-          const name = methodNode.getName();
-          const aiDocSummary = this.getJsDoc(methodNode);
-          const code = methodNode.getText();
-          const aiNodeSummary = await this.summarizer.summarize(
-            code,
-            "Write a brief single sentence documentation summary of the purpose of the following:"
-          );
-
-          if (!name || (!aiDocSummary && !aiNodeSummary)) {
-            return;
-          }
-          let summary = aiNodeSummary;
-          const combined = aiDocSummary
-            ? [aiDocSummary, aiNodeSummary].join("\n")
-            : undefined;
-          summary = combined
-            ? (await this.summarizer.summarize(combined)) + ""
-            : summary + "";
-
-          return { name, text: summary };
-        });
-
-      entry.methods = (await Promise.all(methods)).filter(
-        Boolean
-      ) as NodeSummary[];
+    if (this.isClass(node)) {
+      const methods = await this.getMethodSummaries(node as ClassDeclaration);
+      if (methods.length) entry.methods = methods;
     }
 
     return entry;
   }
 
-  async getFunctionSummaries(sourceFile: SourceFile) {
-    const summaries: NodeSummary[] = [];
-
-    // Extract exported functions
-    for (const func of sourceFile.getFunctions()) {
-      if (func.isExported()) {
-        const summary = await this.summarizeNode(sourceFile, func);
-        if (summary) summaries.push(summary);
-      }
-    }
-    return summaries;
+  private isPublic(methodNode: MethodDeclaration) {
+    return methodNode.getScope() === "public";
   }
 
-  async getClassSummaries(sourceFile: SourceFile) {
-    const summaries: NodeSummary[] = [];
-
-    // Extract exported classes
-    for (const cls of sourceFile.getClasses()) {
-      if (cls.isExported()) {
-        const summary = await this.summarizeNode(sourceFile, cls);
-        if (summary) summaries.push(summary);
-      }
+  private async getMethodSummaries(
+    classNode: ClassDeclaration
+  ): Promise<NodeSummary[]> {
+    const methods: NodeSummary[] = [];
+    for (const methodNode of classNode.getMethods()) {
+      if (!this.isPublic(methodNode)) continue;
+      const summary = await this.summarizeNode(methodNode);
+      if (summary) methods.push(summary);
     }
-    return summaries;
+    return methods;
   }
 
-  async getVariableDeclarations(sourceFile: SourceFile) {
+  private async getSummariesByType(
+    sourceFile: SourceFile,
+    getTypeNodes: () => ExportableNode[]
+  ): Promise<NodeSummary[]> {
     const summaries: NodeSummary[] = [];
-
-    // Extract exported classes
-    for (const variable of sourceFile.getVariableDeclarations()) {
-      if (variable.isExported()) {
-        const summary = await this.summarizeNode(sourceFile, variable);
-        if (summary) summaries.push(summary);
+    for (const node of getTypeNodes()) {
+      if (node.isExported()) {
+        const summary = await this.summarizeNode(node);
+        summary && summaries.push(summary);
       }
     }
     return summaries;
   }
 
   public async readFileSummary(filePath: string): Promise<NodeSummary[]> {
-    const ext = path.extname(filePath);
-    if (!SUPPORTED_EXTENSIONS.includes(ext)) {
-      return [];
-    }
-    const project = new Project();
-    const sourceFile = project.addSourceFileAtPath(filePath);
+    if (!this.validateExt(filePath)) return [];
 
-    const functionSummaries = await this.getFunctionSummaries(sourceFile);
-    const classSummaries = await this.getClassSummaries(sourceFile);
+    const sourceFile = this.getSourceFile(filePath);
+    const functionSummaries = await this.getSummariesByType(
+      sourceFile,
+      sourceFile.getFunctions.bind(sourceFile)
+    );
+    const classSummaries = await this.getSummariesByType(
+      sourceFile,
+      sourceFile.getClasses.bind(sourceFile)
+    );
+    const variableSummaries = await this.getSummariesByType(
+      sourceFile,
+      sourceFile.getVariableDeclarations.bind(sourceFile)
+    );
 
-    return [...functionSummaries, ...classSummaries];
+    return [...functionSummaries, ...classSummaries, ...variableSummaries];
   }
 }
 
