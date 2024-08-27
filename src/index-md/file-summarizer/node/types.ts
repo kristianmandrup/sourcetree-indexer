@@ -7,6 +7,7 @@ import {
   TypeAliasDeclaration,
   VariableDeclaration,
 } from "ts-morph";
+import { CodeComplexity } from "../code-analyzer";
 
 export type NodeKind =
   | "class"
@@ -14,13 +15,16 @@ export type NodeKind =
   | "interface"
   | "type"
   | "method"
-  | "enum";
+  | "enum"
+  | "file";
 
 export interface NodeSummary {
   name: string;
   text: string;
   kind: NodeKind; // "class" | "function" | "interface" | "type" | "method" | "enum";
   methods?: NodeSummary[];
+  complexity?: CodeComplexity;
+  suggestions?: string;
 }
 
 export type JsDocNode = ClassDeclaration | FunctionDeclaration;

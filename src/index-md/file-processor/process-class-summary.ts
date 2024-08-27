@@ -1,5 +1,5 @@
 import { NodeSummary } from "../file-summarizer";
-import { SectionWriter } from "./section-writer";
+import { SectionWriter } from "./section";
 
 export class ProcessClassSummary {
   private readonly indexEntries: string[];

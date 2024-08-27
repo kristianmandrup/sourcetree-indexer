@@ -1,5 +1,10 @@
 import { Command } from "commander";
-import { generateIndexMd, OllamaSummarizer, OpenAISummarizer } from ".";
+import {
+  appContext,
+  generateIndexMd,
+  OllamaSummarizer,
+  OpenAISummarizer,
+} from "./index-md";
 
 const program = new Command();
 
@@ -18,15 +23,19 @@ program
     'Summarizer service: "openai" or "ollama"',
     "ollama"
   )
+  .option("-u, --suggest", "Make improvement suggestions", false)
   .option("-t, --toc", "Table of Contents", true)
-  .option(
-    "-n, --analysis",
-    "Perform code analysis and provide improvement suggestions",
-    false
-  )
+  .option("-n, --analyze", "Perform code and complexity analysis", false)
   .option("-f, --force", "Force processing of all files", false)
   .action(async (dirPath, options) => {
     let summarizer;
+
+    appContext.setOpts({
+      analyze: options.analyze,
+      suggest: options.suggest,
+      toc: options.toc,
+    });
+
     if (options.service === "openai") {
       if (!options.apiKey) {
         console.error("API key is required for OpenAI");

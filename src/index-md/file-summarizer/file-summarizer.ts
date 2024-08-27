@@ -1,7 +1,7 @@
 import { SourceFile } from "ts-morph";
-import { NodeProcessor } from "./node-processor";
-import { NodeSummary } from "./types";
-import { NodeSummarizer } from "./node-summarizer";
+import { NodeProcessor } from "./node";
+import { NodeSummary } from "./node/types";
+import { NodeSummarizer } from "./node";
 import { SourceFileProcessor } from "./source-file-processor";
 
 export class FileSummarizer {

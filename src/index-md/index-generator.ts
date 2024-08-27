@@ -9,6 +9,7 @@ import {
   NodeSummarizer,
 } from "./file-summarizer";
 import { DirectoryProcessor } from "./directory-processor/directory-processor";
+import { appContext } from "./app-context";
 
 export const generateIndexMd = async (
   dirPath: string,
@@ -45,6 +46,8 @@ class IndexGenerator {
     this.fileSummarizer = createFileSummarizer
       ? createFileSummarizer(nodeSummarizer, fileProcessor)
       : new FileSummarizer(nodeSummarizer, fileProcessor);
+
+    appContext.summarizer = summarizer;
   }
 
   public async generateIndexMd(dirPath: string) {

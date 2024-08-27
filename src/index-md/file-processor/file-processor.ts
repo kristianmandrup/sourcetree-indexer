@@ -1,5 +1,12 @@
-import { FileSummarizer, NodeSummary } from "../file-summarizer";
+import { appContext } from "../app-context";
+import {
+  CodeAnalyzer,
+  CodeSuggester,
+  FileSummarizer,
+  NodeSummary,
+} from "../file-summarizer";
 import { NodeSummaryProcessor } from "./node-summary-processor";
+import { SectionWriter } from "./section";
 
 export class FileProcessor {
   private readonly fileSummarizer: FileSummarizer;
@@ -9,6 +16,7 @@ export class FileProcessor {
   private indexHeader: string[] = [];
   private indexFooter: string[] = [];
   private fileName: string = "";
+  private _body = "";
 
   constructor(fileSummarizer: FileSummarizer) {
     this.fileSummarizer = fileSummarizer;
@@ -26,11 +34,13 @@ export class FileProcessor {
     console.log("processing", fileName);
     this.fileName = fileName;
     const summaries = await this.readFileSummaries(fullPath);
-    this.indexEntries = await this.processSummaries(summaries);
+    const summaryTexts = await this.processSummaries(summaries);
+    this.indexEntries = summaryTexts;
     await this.processHeader();
-    await this.processFooter(fullPath);
+    await this.processFooter();
     // combine into full file text
-    return this.createFullFileText();
+    const fullFileText = this.createFullFileText();
+    return fullFileText;
   }
 
   async readFileSummaries(fullPath: string) {
@@ -42,7 +52,7 @@ export class FileProcessor {
   }
 
   get bodyText() {
-    return this.indexEntries.join("\n\n");
+    return (this._body = this._body || this.indexEntries.join("\n\n"));
   }
 
   get footerText() {
@@ -50,7 +60,7 @@ export class FileProcessor {
   }
 
   createFullFileText() {
-    return [this.headerText, this.bodyText, this.footerText].join("\n");
+    return [this.headerText, this.bodyText, this.footerText].join("\n\n");
   }
 
   async processSummaries(summaries: NodeSummary[]) {
@@ -58,10 +68,6 @@ export class FileProcessor {
       this.fileName,
       summaries
     );
-  }
-
-  get entriesText() {
-    return this.indexEntries.join("\n");
   }
 
   private async processHeader(): Promise<void> {
@@ -72,48 +78,97 @@ export class FileProcessor {
   async addFileSummary() {
     const fileSummary = await this.generateFileSummary(
       this.fileName,
-      this.entriesText
+      this.bodyText
     );
     this.indexHeader.push(fileSummary);
   }
 
   async addTOC() {
-    if (this.indexEntries.length > 10) {
-      const fileSummaryWithTOC = await this.generateFileTOC(this.entriesText);
-      this.indexHeader.unshift(fileSummaryWithTOC);
-    }
+    if (!appContext.runtimeOpts.toc) return;
+    if (this.indexEntries.length < 10) return;
+    const tocSection = await this.generateFileTOC(this.bodyText);
+    this.indexHeader.unshift(tocSection);
   }
 
   async generateFileTOC(fileNodeSummariesText: string) {
-    const fileSummary = await this.summarizer.summarize(
+    const tocSection = await this.summarizer.summarize(
       fileNodeSummariesText,
-      "Return a new version of this document with a Table of Contents (TOC) at the top which links to each header section"
+      "Generate a Table of Contents with bulletpoint links to each section of the following"
     );
-    return fileSummary;
+    return tocSection;
   }
 
   private async generateFileSummary(
     fileName: string,
     fileText: string
   ): Promise<string> {
-    const title = `## file : ${fileName}`;
+    // TODO: use section writer
+    const title = `## File : ${fileName}`;
     const fileSummary = await this.summarizer.summarize(
       fileText,
       "Summarize the following in a single paragraph"
     );
-    return [title, fileText].join("\n\n");
+    return [title, fileSummary].join("\n\n");
   }
 
-  private async processFooter(fullPath: string): Promise<void> {
+  private async processFooter(): Promise<void> {
     // Add any footer material here
-    const footer = await this.generateFooter(fullPath);
+    const footer = await this.generateFooter();
+    console.log({ footer });
     this.indexFooter.push(footer);
   }
 
-  private async generateFooter(fullPath: string): Promise<string> {
-    // Implement complexity analysis and refactoring suggestions here
-    // This is a placeholder implementation
-    const footer = ""; // `Footer content for ${fullPath}`; // Replace with actual analysis and suggestions
-    return footer;
+  private async generateFooter(): Promise<string> {
+    // TODO: use section writer
+    const title = `### Footer : ${this.fileName}`;
+
+    const complexitySection = await this.fileComplexitySection(this.bodyText);
+    const suggestionsSection = await this.fileSuggestionsSection(this.bodyText);
+    const sections = [title, complexitySection, suggestionsSection].filter(
+      (sec) => sec
+    );
+    return sections.join("\n");
+  }
+
+  private async fileComplexitySection(
+    text: string
+  ): Promise<string | undefined> {
+    if (!appContext.runtimeOpts.analyze) {
+      console.log("skip file analysis", appContext.runtimeOpts);
+      return;
+
+      return;
+    }
+    const { fileName } = this;
+    const entry: NodeSummary = {
+      name: fileName,
+      text,
+      kind: "file",
+    };
+    const complexity = await new CodeAnalyzer().analyze(text, entry);
+    entry.complexity = complexity;
+    const section = new SectionWriter(fileName).complexitySection(entry);
+    console.log("File complexity:", section);
+    return section;
+  }
+
+  private async fileSuggestionsSection(
+    text: string
+  ): Promise<string | undefined> {
+    if (!appContext.runtimeOpts.suggest) {
+      console.log("skip file suggestions", appContext.runtimeOpts);
+      return;
+    }
+    const { fileName } = this;
+    const entry: NodeSummary = {
+      name: fileName,
+      text,
+      kind: "file",
+    };
+    const suggestions = await new CodeSuggester().suggest(text, entry);
+    entry.suggestions = suggestions;
+    const section = new SectionWriter(fileName).suggestionsSection(entry);
+    console.log("File suggestions:", section);
+    return section;
   }
 }

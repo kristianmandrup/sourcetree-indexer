@@ -1,7 +1,6 @@
-import path from "path";
 import { NodeSummary } from "../file-summarizer";
 import { ProcessClassSummary } from "./process-class-summary";
-import { SectionWriter } from "./section-writer";
+import { SectionWriter } from "./section";
 
 export class NodeSummaryProcessor {
   sectionWriter!: SectionWriter;
@@ -44,20 +43,25 @@ export class NodeSummaryProcessor {
       interface: this.processInterface.bind(this),
       type: this.processType.bind(this),
       method: this.processMethod.bind(this),
+      file: this.processFile.bind(this),
     };
     return processors[kind];
   }
 
   addSummarySection(type: string, summary: NodeSummary) {
     this.indexEntries.push(
-      ...this.sectionWriter?.addSummarySection(type, summary)
+      this.sectionWriter?.addSummarySection(type, summary)
     );
   }
 
   addSummarySubSection(type: string, summary: NodeSummary) {
     this.indexEntries.push(
-      ...this.sectionWriter?.addSummarySubSection(type, summary)
+      this.sectionWriter?.addSummarySubSection(type, summary)
     );
+  }
+
+  private async processFile(_summary: NodeSummary): Promise<void> {
+    return;
   }
 
   private async processClass(summary: NodeSummary): Promise<void> {
