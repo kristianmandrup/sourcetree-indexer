@@ -34,26 +34,36 @@ export class DirectoryProcessor {
     return fs.readdirSync(dirPath);
   }
 
-  public async processDirectory(dirPath: string): Promise<void> {
+  public async processRootDirectory(dirPath: string): Promise<void> {
+    this.indexEntries.push(`## Folder : ${dirPath}`);
+
+    await this.processDirectory(dirPath, 0);
+
+    this.writeIndexFileAt(dirPath);
+  }
+
+  public async processDirectory(dirPath: string, lv: number): Promise<void> {
     console.log("processing", dirPath);
     const files = this.getDirectoryFiles(dirPath);
     for (const file of files) {
       const fullPath = path.join(dirPath, file);
       if (this.isDirectory(fullPath)) {
         this.indexEntries.push(`## Folder : ${file}`);
-        await this.processDirectory(fullPath); // Recursively process subdirectory
+        // TODO: should likely create a new instance of Process directory instead
+        await this.processDirectory(fullPath, lv++); // Recursively process subdirectory
         // await this.appendSubIndex(fullPath);
       } else if (this.isSourceFile(file)) {
         const fileMarkdownText = await this.processFile(fullPath, file);
         this.indexEntries.push(fileMarkdownText);
       }
     }
-    // console.log({ entries: this.indexEntries });
     // await this.appendComplexity(dirPath, this.fileContent);
     // await this.appendSuggestions(dirPath, this.fileContent);
 
     // Write .Index.md for the current directory
-    this.writeIndexFileAt(dirPath);
+    if (lv > 0) {
+      this.writeIndexFileAt(dirPath);
+    }
   }
 
   isSourceFile(fileName: string) {
@@ -74,7 +84,7 @@ export class DirectoryProcessor {
   writeIndexFileAt(dirPath: string) {
     // where to place Index file
     const indexFilePath = path.join(dirPath, this.indexFileName);
-    console.log("write to:", indexFilePath);
+    // console.log("write to:", indexFilePath);
     this.writeFileSync(indexFilePath, this.fileContent);
   }
 

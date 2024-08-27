@@ -28,6 +28,10 @@ export class OpenAISummarizer implements Summarizer {
     return `${question}:\n\n"${text}"`;
   }
 
+  stripQuotes(text: string): string {
+    return text.replace(/^"|"$/g, "");
+  }
+
   public async summarize(text: string, question?: string): Promise<string> {
     const defaultQuestion = `Please provide a concise and clear summary of the following`;
     const prompt = this.createPrompt(question || defaultQuestion, text);
@@ -36,7 +40,7 @@ export class OpenAISummarizer implements Summarizer {
       const { content } = response;
       const message = content[0];
       if (typeof message === "string") {
-        return message.trim();
+        return this.stripQuotes(message.trim());
       } else {
         const complex = (message as any)[0];
         return complex.text;

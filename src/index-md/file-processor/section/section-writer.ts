@@ -35,7 +35,7 @@ export class SectionWriter {
     if (!summary.complexity) return;
     const { complexity } = summary;
     const title = `${this.h(lv)} Code Complexity`;
-    const text = `Score: ${complexity.score} (${complexity.label})\n`;
+    const text = `Score: ${complexity.score} (${complexity.label})`;
     return [title, text].join("\n\n");
   }
 

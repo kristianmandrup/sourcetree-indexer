@@ -55,7 +55,7 @@ class IndexGenerator {
   }
 
   private async processDirectory(dirPath: string) {
-    return await new DirectoryProcessor(this).processDirectory(dirPath);
+    return await new DirectoryProcessor(this).processRootDirectory(dirPath);
   }
 }
 

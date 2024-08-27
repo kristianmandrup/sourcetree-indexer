@@ -25,6 +25,7 @@ export interface NodeSummary {
   methods?: NodeSummary[];
   complexity?: CodeComplexity;
   suggestions?: string;
+  sortNum?: number;
 }
 
 export type JsDocNode = ClassDeclaration | FunctionDeclaration;

@@ -18,8 +18,14 @@ export class AISummarizer {
     }
   }
 
+  stripQuotes(text: string): string {
+    return text.replace(/^"|"$/g, "");
+  }
+
   async summarize(text: string): Promise<string> {
     if (text.trim() === "") return "";
-    return (await this.summarizer.summarize(text)) + "";
+    const summary = (await this.summarizer.summarize(text)) + "";
+    const refined = this.stripQuotes(summary);
+    return refined;
   }
 }

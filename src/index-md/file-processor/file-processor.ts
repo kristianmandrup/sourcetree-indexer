@@ -1,6 +1,7 @@
 import { appContext } from "../app-context";
 import {
   CodeAnalyzer,
+  CodeComplexity,
   CodeSuggester,
   FileSummarizer,
   NodeSummary,
@@ -114,29 +115,30 @@ export class FileProcessor {
   private async processFooter(): Promise<void> {
     // Add any footer material here
     const footer = await this.generateFooter();
-    console.log({ footer });
+    if (!footer) return;
     this.indexFooter.push(footer);
   }
 
-  private async generateFooter(): Promise<string> {
-    // TODO: use section writer
-    const title = `### Footer : ${this.fileName}`;
+  private async generateFooter(): Promise<string | undefined> {
+    // TODO: use section writer?
+    const title = `### Footer`;
 
-    const complexitySection = await this.fileComplexitySection(this.bodyText);
+    const result = await this.fileComplexitySection(this.bodyText);
+    if (!result) return;
+    const { complexity, section } = result;
+    if (complexity && complexity.score < 3) {
+      return section + "\n";
+    }
     const suggestionsSection = await this.fileSuggestionsSection(this.bodyText);
-    const sections = [title, complexitySection, suggestionsSection].filter(
-      (sec) => sec
-    );
-    return sections.join("\n");
+    const sections = [title, section, suggestionsSection].filter((sec) => sec);
+    return sections.join("\n\n");
   }
 
   private async fileComplexitySection(
     text: string
-  ): Promise<string | undefined> {
+  ): Promise<{ section?: string; complexity?: CodeComplexity } | undefined> {
     if (!appContext.runtimeOpts.analyze) {
-      console.log("skip file analysis", appContext.runtimeOpts);
-      return;
-
+      // console.log("skip file analysis", appContext.runtimeOpts);
       return;
     }
     const { fileName } = this;
@@ -146,17 +148,16 @@ export class FileProcessor {
       kind: "file",
     };
     const complexity = await new CodeAnalyzer().analyze(text, entry);
-    entry.complexity = complexity;
     const section = new SectionWriter(fileName).complexitySection(entry);
-    console.log("File complexity:", section);
-    return section;
+    // console.log("File complexity:", section);
+    return { section, complexity };
   }
 
   private async fileSuggestionsSection(
     text: string
   ): Promise<string | undefined> {
     if (!appContext.runtimeOpts.suggest) {
-      console.log("skip file suggestions", appContext.runtimeOpts);
+      // console.log("skip file suggestions", appContext.runtimeOpts);
       return;
     }
     const { fileName } = this;
@@ -166,9 +167,7 @@ export class FileProcessor {
       kind: "file",
     };
     const suggestions = await new CodeSuggester().suggest(text, entry);
-    entry.suggestions = suggestions;
     const section = new SectionWriter(fileName).suggestionsSection(entry);
-    console.log("File suggestions:", section);
     return section;
   }
 }

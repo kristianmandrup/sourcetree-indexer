@@ -19,7 +19,9 @@ export class NodeSummaryProcessor {
     this.fileName = fileName;
     this.sectionWriter = new SectionWriter(fileName);
     this.processClassSummary.setWriter(this.sectionWriter);
-    for (const summary of summaries) {
+    const sortedSummaries = this.sortSummaries(summaries);
+
+    for (const summary of sortedSummaries) {
       const process = this.getProcessor(summary.kind);
       if (process) {
         await process(summary);
@@ -28,6 +30,24 @@ export class NodeSummaryProcessor {
       }
     }
     return this.indexEntries;
+  }
+
+  sortSummaries(summaries: NodeSummary[]) {
+    const sortable = summaries.map((summary) => this.addSortNumber(summary));
+    return summaries.toSorted((a, b) => (a.sortNum || 0) - (b.sortNum || 0));
+  }
+
+  kindSortMap: Record<string, number> = {
+    class: 0,
+    function: 1,
+    enum: 2,
+    interface: 3,
+    type: 4,
+  };
+
+  addSortNumber(summary: NodeSummary) {
+    const sortNum = this.kindSortMap[summary.kind];
+    summary.sortNum = sortNum;
   }
 
   private getProcessor(

@@ -14,6 +14,10 @@ export class OllamaSummarizer implements Summarizer {
     return `${question} (keep it very brief and to the point):\n\n"${text}"`;
   }
 
+  stripQuotes(text: string): string {
+    return text.replace(/^"|"$/g, "");
+  }
+
   public async summarize(text: string, question?: string): Promise<string> {
     const defaultQuestion = `Please provide a concise and clear summary of the following`;
     const prompt = this.createPrompt(question || defaultQuestion, text);
@@ -21,7 +25,7 @@ export class OllamaSummarizer implements Summarizer {
     const { content } = response;
     if (content.length > 0) {
       if (typeof content === "string") {
-        return content.trim();
+        return this.stripQuotes(content.trim());
       }
       return "";
     } else {

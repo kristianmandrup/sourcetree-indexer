@@ -27,7 +27,7 @@ export class CodeAnalyzer {
     entry?: NodeSummary
   ): Promise<CodeComplexity | undefined> {
     if (!appContext.runtimeOpts.analyze) return;
-    console.log("Code complexity analysis for:", code);
+    // console.log("Code complexity analysis for:", code);
     const complexity = await this.analyzeComplexity(code);
     if (entry) {
       entry.complexity = complexity;
