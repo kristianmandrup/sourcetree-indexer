@@ -1,19 +1,37 @@
 import { NodeSummary } from "../file-summarizer";
+import { SectionWriter } from "./section-writer";
 
 export class ProcessClassSummary {
   private readonly indexEntries: string[];
+  private sectionWriter!: SectionWriter;
 
   constructor(indexEntries: string[]) {
     this.indexEntries = indexEntries;
   }
 
-  public async processClass(summary: NodeSummary): Promise<void> {
-    this.indexEntries.push(`### Class: ${summary.name}`);
-    this.indexEntries.push(`${summary.text}`);
+  setWriter(sectionWriter: SectionWriter) {
+    this.sectionWriter = sectionWriter;
+  }
+
+  addSummarySection(type: string, summary: NodeSummary) {
+    this.indexEntries.push(
+      ...this.sectionWriter?.addSummarySection(type, summary)
+    );
+  }
+
+  addSummarySubSection(type: string, summary: NodeSummary) {
+    this.indexEntries.push(
+      ...this.sectionWriter?.addSummarySubSection(type, summary)
+    );
+  }
+
+  public async processClass(summary: NodeSummary): Promise<string[]> {
+    this.addSummarySection("Class", summary);
 
     if (summary.methods) {
       await this.processMethodSummaries(summary.methods);
     }
+    return this.indexEntries;
   }
 
   public async processMethodSummaries(methods: NodeSummary[]): Promise<void> {
@@ -25,7 +43,6 @@ export class ProcessClassSummary {
   }
 
   private async processMethodSummary(summary: NodeSummary): Promise<void> {
-    this.indexEntries.push(`### Method: ${summary.name}`);
-    this.indexEntries.push(`${summary.text}`);
+    this.addSummarySubSection("Method", summary);
   }
 }

@@ -1,16 +1,25 @@
+import path from "path";
 import { NodeSummary } from "../file-summarizer";
 import { ProcessClassSummary } from "./process-class-summary";
+import { SectionWriter } from "./section-writer";
 
 export class NodeSummaryProcessor {
-  private readonly indexEntries: string[];
+  sectionWriter!: SectionWriter;
+  private readonly indexEntries: string[] = [];
   private readonly processClassSummary: ProcessClassSummary; // Ensure ProcessClassSummary is imported or defined
+  fileName: string = "";
 
-  constructor(indexEntries: string[]) {
-    this.indexEntries = indexEntries;
-    this.processClassSummary = new ProcessClassSummary(indexEntries); // Assuming ProcessClassSummary is defined
+  constructor() {
+    this.processClassSummary = new ProcessClassSummary(this.indexEntries); // Assuming ProcessClassSummary is defined
   }
 
-  public async processSummaries(summaries: NodeSummary[]): Promise<void> {
+  public async processSummaries(
+    fileName: string,
+    summaries: NodeSummary[]
+  ): Promise<string[]> {
+    this.fileName = fileName;
+    this.sectionWriter = new SectionWriter(fileName);
+    this.processClassSummary.setWriter(this.sectionWriter);
     for (const summary of summaries) {
       const process = this.getProcessor(summary.kind);
       if (process) {
@@ -19,6 +28,7 @@ export class NodeSummaryProcessor {
         throw new Error(`Unknown summary kind: ${summary.kind}`);
       }
     }
+    return this.indexEntries;
   }
 
   private getProcessor(
@@ -38,32 +48,39 @@ export class NodeSummaryProcessor {
     return processors[kind];
   }
 
+  addSummarySection(type: string, summary: NodeSummary) {
+    this.indexEntries.push(
+      ...this.sectionWriter?.addSummarySection(type, summary)
+    );
+  }
+
+  addSummarySubSection(type: string, summary: NodeSummary) {
+    this.indexEntries.push(
+      ...this.sectionWriter?.addSummarySubSection(type, summary)
+    );
+  }
+
   private async processClass(summary: NodeSummary): Promise<void> {
     await this.processClassSummary.processClass(summary);
   }
 
   private async processEnum(summary: NodeSummary): Promise<void> {
-    this.indexEntries.push(`### Enum: ${summary.name}`);
-    this.indexEntries.push(`${summary.text}`);
+    this.addSummarySection("Enum", summary);
   }
 
   private async processFunction(summary: NodeSummary): Promise<void> {
-    this.indexEntries.push(`### Function: ${summary.name}`);
-    this.indexEntries.push(`${summary.text}`);
+    this.addSummarySection("Function", summary);
   }
 
   private async processInterface(summary: NodeSummary): Promise<void> {
-    this.indexEntries.push(`### Interface: ${summary.name}`);
-    this.indexEntries.push(`${summary.text}`);
+    this.addSummarySection("Interface", summary);
   }
 
   private async processType(summary: NodeSummary): Promise<void> {
-    this.indexEntries.push(`### Type: ${summary.name}`);
-    this.indexEntries.push(`${summary.text}`);
+    this.addSummarySection("Type", summary);
   }
 
   private async processMethod(summary: NodeSummary): Promise<void> {
-    this.indexEntries.push(`### Method: ${summary.name}`);
-    this.indexEntries.push(`${summary.text}`);
+    this.addSummarySubSection("Method", summary);
   }
 }

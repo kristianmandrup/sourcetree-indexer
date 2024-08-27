@@ -1,9 +1,4 @@
-import {
-  ClassDeclaration,
-  FunctionDeclaration,
-  JSDoc,
-  SyntaxKind,
-} from "ts-morph";
+import { JSDoc, SyntaxKind } from "ts-morph";
 import { parse } from "comment-parser";
 import { JsDocNode, SummarizableNode } from "./types";
 
@@ -26,8 +21,6 @@ export class JsDocExtractor {
 
   extractJsDocDescription(jsDocText: string): string {
     const parsed = parse(jsDocText);
-    return parsed.length > 0
-      ? parsed[0].description || "No summary available."
-      : "No summary available.";
+    return parsed.length > 0 ? parsed[0].description || "" : "";
   }
 }

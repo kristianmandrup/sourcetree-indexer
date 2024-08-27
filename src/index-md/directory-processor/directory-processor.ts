@@ -10,7 +10,7 @@ export class DirectoryProcessor {
   constructor(private readonly indexGenerator: IndexGenerator) {}
 
   get fileProcessor(): FileProcessor {
-    return new FileProcessor(this.fileSummarizer, this.indexEntries);
+    return new FileProcessor(this.fileSummarizer);
   }
 
   get indexFileName() {
@@ -29,14 +29,22 @@ export class DirectoryProcessor {
         this.indexEntries.push(`## folder : ${file}`);
         await this.processDirectory(fullPath); // Recursively process subdirectory
         await this.appendSubIndex(fullPath);
-      } else if (SUPPORTED_EXTENSIONS.includes(path.extname(file))) {
-        await this.processFile(fullPath, file);
+      } else if (this.isSourceFile(file)) {
+        const fileText = await this.processFile(fullPath, file);
+        this.indexEntries.push(fileText);
       }
     }
-    // where to place Index file
-    const indexPath = path.join(dirPath);
     // Write .Index.md for the current directory
-    this.writeIndexFile(indexPath);
+    this.writeIndexFileAt(dirPath);
+  }
+
+  isSourceFile(fileName: string) {
+    const fileExt = this.getFileExtension(fileName);
+    return SUPPORTED_EXTENSIONS.includes(fileExt);
+  }
+
+  getFileExtension(fileName: string) {
+    return path.extname(fileName);
   }
 
   get fileContent() {
@@ -44,7 +52,14 @@ export class DirectoryProcessor {
   }
 
   // Write .Index.md for the current directory
-  writeIndexFile(filePath: string) {
+  writeIndexFileAt(dirPath: string) {
+    // where to place Index file
+    const indexFilePath = path.join(dirPath, this.indexFileName);
+    console.log("write to:", indexFilePath);
+    this.writeFileSync(indexFilePath, this.fileContent);
+  }
+
+  writeFileSync(filePath: string, content: string) {
     fs.writeFileSync(filePath, this.fileContent);
   }
 
@@ -74,7 +89,10 @@ export class DirectoryProcessor {
     }
   }
 
-  private async processFile(fullPath: string, fileName: string): Promise<void> {
+  private async processFile(
+    fullPath: string,
+    fileName: string
+  ): Promise<string> {
     return await this.fileProcessor.processFile(fullPath, fileName);
   }
 }

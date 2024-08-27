@@ -20,7 +20,7 @@ program
   )
   .option("-t, --toc", "Table of Contents", true)
   .option(
-    "-a, --analysis",
+    "-n, --analysis",
     "Perform code analysis and provide improvement suggestions",
     false
   )
