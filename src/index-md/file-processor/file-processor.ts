@@ -9,7 +9,11 @@ import {
 } from "../file-summarizer";
 import { NodeSummaryProcessor } from "./node-summary-processor";
 import { SectionWriter } from "./section";
-import { FileSummary } from "../directory-processor/types";
+import {
+  BaseSummary,
+  FileSummary,
+  SectionSummary,
+} from "../directory-processor/types";
 
 export class FileProcessor {
   private readonly fileSummarizer: FileSummarizer;
@@ -20,7 +24,7 @@ export class FileProcessor {
   private indexFooter: string[] = [];
   private fileName: string = "";
   private _body = "";
-  private timestamp?: string;
+  summaries: NodeSummary[] = [];
 
   constructor(fileSummarizer: FileSummarizer) {
     this.fileSummarizer = fileSummarizer;
@@ -43,6 +47,7 @@ export class FileProcessor {
     const timestamp = this.createTimeStamp();
     this.fileName = fileName;
     const summaries = await this.readFileSummaries(fullPath);
+    this.summaries = summaries;
     const summaryTexts = await this.processSummaries(summaries);
     this.indexEntries = summaryTexts;
     await this.processHeader();
@@ -54,6 +59,7 @@ export class FileProcessor {
       text: fullFileText,
       timestamp,
       nodes: summaries,
+      type: "file",
     };
   }
 
@@ -104,16 +110,18 @@ export class FileProcessor {
   async addTOC() {
     if (!appContext.runtimeOpts.toc) return;
     if (this.indexEntries.length < 10) return;
-    const tocSection = await this.generateFileTOC(this.bodyText);
+    const tocSection = await this.generateFileTOC();
     this.indexHeader.unshift(tocSection);
   }
 
-  async generateFileTOC(fileNodeSummariesText: string) {
-    const tocSection = await this.summarizer.summarize(
-      fileNodeSummariesText,
-      "Generate a Table of Contents with bulletpoint links to each section of the following"
-    );
-    return tocSection;
+  tocEntry(summary: BaseSummary) {
+    const indent = " ".repeat(summary.lv ?? 2);
+    return `${indent}- <a href="${summary.slug}">${summary.name}</a>`;
+  }
+
+  async generateFileTOC() {
+    const tocEntries = this.summaries.map((sum) => this.tocEntry(sum));
+    return tocEntries.join("\n");
   }
 
   private async generateFileSummary(
@@ -159,10 +167,10 @@ export class FileProcessor {
       return;
     }
     const { fileName } = this;
-    const entry: NodeSummary = {
+    const entry: SectionSummary = {
       name: fileName,
       text,
-      kind: "file",
+      type: "section",
     };
     const complexity = await new CodeAnalyzer().analyze(text, entry);
     const section = new SectionWriter(fileName).complexitySection(entry);
@@ -178,10 +186,10 @@ export class FileProcessor {
       return;
     }
     const { fileName } = this;
-    const entry: NodeSummary = {
+    const entry: SectionSummary = {
       name: fileName,
       text,
-      kind: "file",
+      type: "section",
     };
     const suggestions = await new CodeSuggester().suggest(text, entry);
     const section = new SectionWriter(fileName).suggestionsSection(entry);

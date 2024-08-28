@@ -2,15 +2,19 @@ import path from "path";
 import { NodeSummary } from "../../file-summarizer";
 import { Anchor } from "./anchor";
 import { appContext } from "../../app-context";
+import { SectionSummary } from "../../directory-processor/types";
 
 export class SectionWriter {
   anchor: Anchor;
+  slug?: string;
   constructor(private readonly fileName: string) {
     this.anchor = new Anchor(fileName);
   }
 
   generateAnchor(title: string) {
-    return this.anchor.generate(title);
+    const anchor = this.anchor.generate(title);
+    this.slug = anchor.slug;
+    return anchor.link;
   }
 
   h2(type: string, title: string) {
@@ -31,7 +35,7 @@ export class SectionWriter {
     return "#".repeat(count);
   }
 
-  complexitySection(summary: NodeSummary, lv = 4) {
+  complexitySection(summary: NodeSummary | SectionSummary, lv = 4) {
     if (!summary.complexity) return;
     const { complexity } = summary;
     const title = `${this.h(lv)} Code Complexity`;
@@ -39,7 +43,7 @@ export class SectionWriter {
     return [title, text].join("\n\n");
   }
 
-  suggestionsSection(summary: NodeSummary, lv = 4) {
+  suggestionsSection(summary: NodeSummary | SectionSummary, lv = 4) {
     if (!summary.suggestions) return;
     const { suggestions } = summary;
     const title = `${this.h(lv)} Code improvement suggestions`;
@@ -61,11 +65,15 @@ export class SectionWriter {
 
   addSummarySection(type: string, summary: NodeSummary) {
     const title = this.h2(type, summary.name);
+    summary.slug = this.slug;
+    summary.lv = 2;
     return this.combineSection(title, summary);
   }
 
   addSummarySubSection(type: string, summary: NodeSummary) {
     const title = this.h3(type, summary.name);
+    summary.slug = this.slug;
+    summary.lv = 3;
     return this.combineSection(title, summary);
   }
 }

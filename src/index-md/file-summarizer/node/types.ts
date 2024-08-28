@@ -8,6 +8,7 @@ import {
   VariableDeclaration,
 } from "ts-morph";
 import { CodeComplexity } from "../code-analyzer";
+import { BaseSummary } from "../../directory-processor/types";
 
 export type NodeKind =
   | "class"
@@ -15,18 +16,15 @@ export type NodeKind =
   | "interface"
   | "type"
   | "method"
-  | "enum"
-  | "file";
+  | "enum";
 
-export interface NodeSummary {
-  name: string;
-  text: string;
+export type NodeSummary = BaseSummary & {
   kind: NodeKind; // "class" | "function" | "interface" | "type" | "method" | "enum";
   methods?: NodeSummary[];
   complexity?: CodeComplexity;
   suggestions?: string;
   sortNum?: number;
-}
+};
 
 export type JsDocNode = ClassDeclaration | FunctionDeclaration;
 

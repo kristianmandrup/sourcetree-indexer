@@ -63,7 +63,6 @@ export class NodeSummaryProcessor {
       interface: this.processInterface.bind(this),
       type: this.processType.bind(this),
       method: this.processMethod.bind(this),
-      file: this.processFile.bind(this),
     };
     return processors[kind];
   }
@@ -78,10 +77,6 @@ export class NodeSummaryProcessor {
     this.indexEntries.push(
       this.sectionWriter?.addSummarySubSection(type, summary)
     );
-  }
-
-  private async processFile(_summary: NodeSummary): Promise<void> {
-    return;
   }
 
   private async processClass(summary: NodeSummary): Promise<void> {

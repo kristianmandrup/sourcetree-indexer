@@ -1,4 +1,5 @@
 import { appContext } from "../app-context";
+import { SectionSummary } from "../directory-processor/types";
 import { NodeSummary } from "./node";
 
 export class CodeSuggester {
@@ -9,7 +10,7 @@ export class CodeSuggester {
     this.prompt = prompt || this.prompt;
   }
 
-  async suggest(code: string, entry?: NodeSummary) {
+  async suggest(code: string, entry?: NodeSummary | SectionSummary) {
     if (!appContext.runtimeOpts.suggest) return;
     if (entry && entry.complexity && entry.complexity.score < 2) {
       console.log("not sufficiently complex to warrant any suggestions");

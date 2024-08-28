@@ -182,20 +182,17 @@ generate-index-md ./data/parser --service ollama --model phi3:mini
 ## TODO
 
 - Cleanup option to delete all `.Index.md` files
-- VS Code plugin
+- Let tags bubble up from subfolder metadata?
+- Finder - search on index files with tags partly matching search term
+- Generate proper TOCs using slugs stored on summaries [-]
+  - Done for Node summaries - requires testing
 - Improved complexity analysis and suggestions
   - Folder complexity: depending on the number of files and subfolders and the total complexity of each
   - Refactoring suggestions
     - Entry
     - File
     - Folder
-
-## Done
-
-- Add more run options (TOC, force, analysis) [x]
-- By default it should only process files in a folder modified/created since last timestamp (use `force` option to process all) [x]
-- Add meta data at the top of each file (`timestamp`, `tags`) using YAML frontmatter [x]
-- For each entry if `analysis` is turned on [x]
+- VS Code plugin
 
 ### Metadata
 

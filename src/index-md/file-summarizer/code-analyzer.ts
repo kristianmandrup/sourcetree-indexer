@@ -1,4 +1,5 @@
 import { appContext } from "../app-context";
+import { SectionSummary } from "../directory-processor/types";
 import { NodeSummary } from "./node";
 
 export type ComplexityLabel =
@@ -24,7 +25,7 @@ export class CodeAnalyzer {
 
   async analyze(
     code: string,
-    entry?: NodeSummary
+    entry?: NodeSummary | SectionSummary
   ): Promise<CodeComplexity | undefined> {
     if (!appContext.runtimeOpts.analyze) return;
     // console.log("Code complexity analysis for:", code);

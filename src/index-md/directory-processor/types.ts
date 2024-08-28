@@ -1,9 +1,14 @@
 import { CodeComplexity, NodeSummary } from "../file-summarizer";
 
+export type SummaryType = "file" | "folder" | "section" | "node";
+
 export type BaseSummary = {
   name: string;
   text: string;
   timestamp?: string;
+  type: SummaryType;
+  slug?: string;
+  lv?: number;
 };
 
 // f.ex footer, header, complexity etc
@@ -24,6 +29,11 @@ export type DirectorySummary = BaseFileSummary & {
 
 export type FileSummary = BaseFileSummary & {
   nodes: NodeSummary[];
+};
+
+export type SectionSummary = BaseFileSummary & {
+  complexity?: CodeComplexity;
+  suggestions?: string;
 };
 
 export type FileOrDirSummary = FileSummary | DirectorySummary;

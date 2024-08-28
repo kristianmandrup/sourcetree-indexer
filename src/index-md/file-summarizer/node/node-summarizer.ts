@@ -59,7 +59,7 @@ export class NodeSummarizer {
     const kind = this.getKindName(node);
     const summary = this.combineNodeSummary(docSummary, aiNodeSummary);
 
-    const entry: NodeSummary = { name, text: summary, kind };
+    const entry: NodeSummary = { name, text: summary, kind, type: "node" };
 
     await this.processClassNode(node, entry);
 

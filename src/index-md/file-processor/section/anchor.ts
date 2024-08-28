@@ -11,10 +11,17 @@ export class Anchor {
       .replace(/^-+|-+$/g, ""); // Remove leading and trailing hyphens
   }
 
-  generate(name: string) {
+  generate(name: string): {
+    link: string;
+    slug: string;
+  } {
     const fileName = path.basename(this.fileName, path.extname(this.fileName));
     const anchorName = [fileName, name].join("-");
-    const anchorLink = this.sluggify(anchorName);
-    return `<a href="#${anchorLink}">${name}</a>`;
+    const slug = this.sluggify(anchorName);
+    const link = `<a href="#${slug}">${name}</a>`;
+    return {
+      link,
+      slug,
+    };
   }
 }
