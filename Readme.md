@@ -8,9 +8,26 @@ This can be useful for a human developer or AI agent to quickly get an overall i
 
 ## Example output
 
+The tool can now generate YAML frontmatter with metadata. This can be used for the agent to quickly determine the relevance of the folder.
+As the tool runs, it will check the last modified date of each folder and compare with the timestamp in the metadata. Only if a folder has been updated
+since the last run, the tool will process that folder. The same will shortly be usef for files as well. This way the processing will be much faster after the first run.
+
 `.Index.md`
 
 ````md
+---
+timestamp: "2024-08-28 14:16:18"
+tags:
+  [
+    "StructuredCodeExtraction",
+    "ParsingInterface",
+    "OptionsConfiguration",
+    "LineParser",
+    "CodeBlockValidation",
+    "FencingDelimiters",
+  ]
+---
+
 ## Folder : ./data/parser
 
 ## File : block-parser.ts
