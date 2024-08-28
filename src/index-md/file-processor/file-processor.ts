@@ -25,6 +25,7 @@ export class FileProcessor {
   private fileName: string = "";
   private _body = "";
   summaries: NodeSummary[] = [];
+  footerSummaries: SectionSummary[] = [];
 
   constructor(fileSummarizer: FileSummarizer) {
     this.fileSummarizer = fileSummarizer;
@@ -107,6 +108,7 @@ export class FileProcessor {
     this.indexHeader.push(fileSummary);
   }
 
+  // TODO: move to TOC builder
   async addTOC() {
     if (!appContext.runtimeOpts.toc) return;
     if (this.indexEntries.length < 10) return;
@@ -116,7 +118,7 @@ export class FileProcessor {
 
   tocEntry(summary: BaseSummary) {
     const indent = " ".repeat(summary.lv ?? 2);
-    return `${indent}- <a href="${summary.slug}">${summary.name}</a>`;
+    return `${indent}- [${summary.name}](#${summary.slug})`;
   }
 
   async generateFileTOC() {
@@ -174,7 +176,7 @@ export class FileProcessor {
     };
     const complexity = await new CodeAnalyzer().analyze(text, entry);
     const section = new SectionWriter(fileName).complexitySection(entry);
-    // console.log("File complexity:", section);
+    this.footerSummaries.push(entry);
     return { section, complexity };
   }
 
@@ -191,7 +193,8 @@ export class FileProcessor {
       text,
       type: "section",
     };
-    const suggestions = await new CodeSuggester().suggest(text, entry);
+    await new CodeSuggester().suggest(text, entry);
+    this.footerSummaries.push(entry);
     const section = new SectionWriter(fileName).suggestionsSection(entry);
     return section;
   }
