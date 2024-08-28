@@ -51,6 +51,7 @@ Score: 3 (Medium)
 - **Options interface refinement**:
   - Ensure it clearly defines properties related to escaping sequences and predicates, possibly including getters for easy access.
 - **Documentation improvements**: Consider adding comments or JSDoc above each method/class explaining their purpose. This enhances readability and maintainability.```
+````
 
 `file-sys/.Index.md`
 
@@ -79,7 +80,6 @@ Deletes a synchronization reference for the specified path, removing associated 
 
 Reads and synchronizes directory contents at specified path as an array of runtime directory entries.
 ```
-````
 
 ## Quick start
 
@@ -189,4 +189,8 @@ How to [parse](https://peterbabic.dev/blog/yaml-metadata-in-markdown/) via:
 layout: post
 title: Blogging Like a Hacker
 ---
+```
+
+```
+
 ```
