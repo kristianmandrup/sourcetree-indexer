@@ -1,3 +1,4 @@
+import moment from "moment";
 import { appContext } from "../app-context";
 import {
   CodeAnalyzer,
@@ -8,6 +9,7 @@ import {
 } from "../file-summarizer";
 import { NodeSummaryProcessor } from "./node-summary-processor";
 import { SectionWriter } from "./section";
+import { FileSummary } from "../directory-processor/types";
 
 export class FileProcessor {
   private readonly fileSummarizer: FileSummarizer;
@@ -18,6 +20,7 @@ export class FileProcessor {
   private indexFooter: string[] = [];
   private fileName: string = "";
   private _body = "";
+  private timestamp?: string;
 
   constructor(fileSummarizer: FileSummarizer) {
     this.fileSummarizer = fileSummarizer;
@@ -28,11 +31,16 @@ export class FileProcessor {
     return this.fileSummarizer.summarizer;
   }
 
+  createTimeStamp() {
+    return moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
+  }
+
   public async processFile(
     fullPath: string,
     fileName: string
-  ): Promise<string> {
+  ): Promise<FileSummary> {
     console.log("processing", fileName);
+    const timestamp = this.createTimeStamp();
     this.fileName = fileName;
     const summaries = await this.readFileSummaries(fullPath);
     const summaryTexts = await this.processSummaries(summaries);
@@ -41,7 +49,12 @@ export class FileProcessor {
     await this.processFooter();
     // combine into full file text
     const fullFileText = this.createFullFileText();
-    return fullFileText;
+    return {
+      name: fileName,
+      text: fullFileText,
+      timestamp,
+      nodes: summaries,
+    };
   }
 
   async readFileSummaries(fullPath: string) {
@@ -58,6 +71,10 @@ export class FileProcessor {
 
   get footerText() {
     return this.indexFooter.join("\n");
+  }
+
+  get frontMatter() {
+    return ``;
   }
 
   createFullFileText() {

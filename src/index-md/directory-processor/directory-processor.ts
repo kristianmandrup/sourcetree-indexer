@@ -1,3 +1,4 @@
+import moment from "moment";
 import fs from "fs-extra";
 import path from "path";
 import {
@@ -10,10 +11,15 @@ import { IndexGenerator } from "../index-generator";
 import { FileProcessor } from "../file-processor/file-processor";
 import { SectionWriter } from "../file-processor";
 import { appContext } from "../app-context";
+import { DirectorySummary, FileOrDirSummary, FileSummary } from "./types";
+import { jsonToFrontmatterString } from "./json-to-frontmatter";
+import frontmatter from "gray-matter";
 
 export class DirectoryProcessor {
   private readonly indexEntries: string[] = [];
   private _fileContent: string = "";
+  fileSummaries: FileOrDirSummary[] = [];
+  metaData: Record<string, any> = {};
 
   constructor(private readonly indexGenerator: IndexGenerator) {}
 
@@ -42,28 +48,100 @@ export class DirectoryProcessor {
     this.writeIndexFileAt(dirPath);
   }
 
-  public async processDirectory(dirPath: string, lv: number): Promise<void> {
+  processSubDirectory(
+    dirPath: string,
+    lv: number
+  ): Promise<DirectorySummary | undefined> {
+    return new DirectoryProcessor(this.indexGenerator).processDirectory(
+      dirPath,
+      lv
+    );
+  }
+
+  createTimeStamp() {
+    return moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
+  }
+
+  addMetaData(label: string, value: any) {
+    this.metaData[label] = value;
+  }
+
+  readFrontMatter(dirPath: string) {
+    try {
+      const fileName = this.indexMdFileNameFor(dirPath);
+      const content = this.readFileSync(fileName);
+      const matter = frontmatter(content);
+      return matter.data;
+    } catch (err: any) {
+      console.error(err.message);
+    }
+  }
+
+  wasFileModifiedAfterTimestamp(
+    frontmatterTimestamp: Date,
+    mostRecentlyChangedTimestamp: Date
+  ) {
+    return mostRecentlyChangedTimestamp > frontmatterTimestamp;
+  }
+
+  public async processDirectory(
+    dirPath: string,
+    lv: number
+  ): Promise<DirectorySummary | undefined> {
     console.log("processing", dirPath);
+    const mostRecentlyChanged = this.getMostRecentFileChangeDate(dirPath);
+    const metadata = this.readFrontMatter(dirPath);
+    const frontmatterTimestamp = new Date(metadata?.timestamp ?? 0);
+    if (frontmatterTimestamp && mostRecentlyChanged) {
+      if (
+        this.wasFileModifiedAfterTimestamp(
+          frontmatterTimestamp,
+          mostRecentlyChanged
+        )
+      ) {
+        console.log("skip folder, since not modified since last run");
+        return;
+      }
+    }
+
+    const timestamp = this.createTimeStamp();
+    this.addMetaData("timestamp", timestamp);
     const files = this.getDirectoryFiles(dirPath);
     for (const file of files) {
       const fullPath = path.join(dirPath, file);
       if (this.isDirectory(fullPath)) {
         this.indexEntries.push(`## Folder : ${file}`);
-        // TODO: should likely create a new instance of Process directory instead
-        await this.processDirectory(fullPath, lv++); // Recursively process subdirectory
-        // await this.appendSubIndex(fullPath);
+        // Recursively process subdirectory
+        // Creates a new instance of Process directory to ensure state isolation
+        const dirSummary = await this.processSubDirectory(fullPath, lv++);
+        dirSummary && this.fileSummaries.push(dirSummary);
+        // uses Index file in subdir to make summary of the subdir
+        await this.appendSubIndex(fullPath);
       } else if (this.isSourceFile(file)) {
-        const fileMarkdownText = await this.processFile(fullPath, file);
-        this.indexEntries.push(fileMarkdownText);
+        const fileSummary = await this.processFile(fullPath, file);
+        this.fileSummaries.push(fileSummary);
+        this.indexEntries.push(fileSummary.text);
       }
     }
     // await this.appendComplexity(dirPath, this.fileContent);
     // await this.appendSuggestions(dirPath, this.fileContent);
-
+    const tags = await this.suggestTags();
+    console.log({ tags });
+    this.addMetaData("tags", tags);
     // Write .Index.md for the current directory
     if (lv > 0) {
       this.writeIndexFileAt(dirPath);
     }
+    return {
+      name: dirPath,
+      text: this.fileContent,
+      files: this.fileSummaries,
+      timestamp,
+    };
+  }
+
+  get fileSummaryContent() {
+    return this.fileSummaries.map((sum) => sum.text).join("\n");
   }
 
   isSourceFile(fileName: string) {
@@ -75,9 +153,23 @@ export class DirectoryProcessor {
     return path.extname(fileName);
   }
 
+  getMostRecentFileChangeDate(fileName: string): Date | undefined {
+    try {
+      const stats = fs.statSync(fileName); // Get file statistics synchronously
+      const { mtime, ctime } = stats; // Destructure to get mtime and ctime
+      return new Date(Math.max(mtime.getTime(), ctime.getTime())); // Return the most recent date
+    } catch (err) {
+      console.error(`Error retrieving stats for file: ${fileName}`, err);
+    }
+  }
+
   get fileContent() {
     return (this._fileContent =
       this._fileContent || this.indexEntries.join("\n\n"));
+  }
+
+  get frontMatter() {
+    return jsonToFrontmatterString(this.metaData);
   }
 
   // Write .Index.md for the current directory
@@ -85,11 +177,12 @@ export class DirectoryProcessor {
     // where to place Index file
     const indexFilePath = path.join(dirPath, this.indexFileName);
     // console.log("write to:", indexFilePath);
-    this.writeFileSync(indexFilePath, this.fileContent);
+    const fullContent = [this.frontMatter, this.fileContent].join("\n");
+    this.writeFileSync(indexFilePath, fullContent);
   }
 
   writeFileSync(filePath: string, content: string) {
-    fs.writeFileSync(filePath, this.fileContent);
+    fs.writeFileSync(filePath, content);
   }
 
   get summarizer() {
@@ -108,10 +201,14 @@ export class DirectoryProcessor {
     return await fs.readFile(filePath, "utf8");
   }
 
+  indexMdFileNameFor(dirPath: string) {
+    return path.join(dirPath, this.indexFileName);
+  }
+
   // process sub-folder Index.md file
   private async appendSubIndex(fullPath: string): Promise<void> {
-    const subIndexPath = path.join(fullPath, this.indexFileName);
-    if (fs.existsSync(subIndexPath)) {
+    const subIndexPath = this.indexMdFileNameFor(fullPath);
+    if (this.hasFileAt(subIndexPath)) {
       const aiSummary = await this.subfolderSummary(subIndexPath);
       const complexitySection = await this.subfolderComplexity(
         fullPath,
@@ -126,8 +223,21 @@ export class DirectoryProcessor {
     }
   }
 
-  hasSubFolderIndexFile(filePath: string) {
+  hasFileAt(filePath: string) {
     return fs.existsSync(filePath);
+  }
+
+  async suggestTags() {
+    const tags = await this.summarizer.summarize(
+      this.fileSummaryContent,
+      `Based on the following, return ONLY a comma separated list of 1-6 tags. The tags should center around concepts or domains the code can help with. Do not return any other text in your response.`
+    );
+    const tagList = tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => !/typescript/i.test(tag));
+    console.log({ tagList });
+    return tagList;
   }
 
   private async subfolderSummary(filePath: string) {
@@ -174,7 +284,7 @@ export class DirectoryProcessor {
   private async processFile(
     fullPath: string,
     fileName: string
-  ): Promise<string> {
+  ): Promise<FileSummary> {
     return await this.fileProcessor.processFile(fullPath, fileName);
   }
 }
