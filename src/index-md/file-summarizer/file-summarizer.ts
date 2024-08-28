@@ -3,6 +3,7 @@ import { NodeProcessor } from "./node";
 import { NodeSummary } from "./node/types";
 import { NodeSummarizer } from "./node";
 import { SourceFileProcessor } from "./source-file-processor";
+import { appContext } from "../app-context";
 
 export class FileSummarizer {
   private nodeSummaryProcessor: NodeProcessor;
@@ -28,14 +29,22 @@ export class FileSummarizer {
   }
 
   getNodeProcessors(sourceFile: SourceFile) {
-    return [
-      sourceFile.getFunctions.bind(sourceFile),
-      sourceFile.getClasses.bind(sourceFile),
-      sourceFile.getVariableDeclarations.bind(sourceFile),
+    const typeNodeProcessors = [
       sourceFile.getInterfaces.bind(sourceFile),
       sourceFile.getTypeAliases.bind(sourceFile),
       sourceFile.getEnums.bind(sourceFile),
     ];
+
+    const nodeProcessors: any[] = [
+      sourceFile.getFunctions.bind(sourceFile),
+      sourceFile.getClasses.bind(sourceFile),
+      sourceFile.getVariableDeclarations.bind(sourceFile),
+    ];
+
+    if (appContext.runtimeOpts.types) {
+      nodeProcessors.push(...typeNodeProcessors);
+    }
+    return nodeProcessors;
   }
 
   public async readFileSummary(filePath: string): Promise<NodeSummary[]> {

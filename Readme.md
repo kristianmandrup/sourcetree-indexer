@@ -8,9 +8,11 @@ This can be useful for a human developer or AI agent to quickly get an overall i
 
 ## Example output
 
-The tool can now generate YAML frontmatter with metadata. This can be used for the agent to quickly determine the relevance of the folder.
-As the tool runs, it will check the last modified date of each folder and compare with the timestamp in the metadata. Only if a folder has been updated
-since the last run, the tool will process that folder. The same will shortly be usef for files as well. This way the processing will be much faster after the first run.
+The tool can now generate YAML frontmatter with metadata in the `Index.md` file. This can be used for the agent to quickly determine the relevance of the folder.
+As the tool runs, it will check the last modified date of each folder/file and compare each with the timestamp from the `Index.md` metadata.
+The tool will by default only process folders and files that have been updated since the last run. This can greatly reduce the compute/time necesary on successive runs.
+
+The following is an sample of a generated output on a folder with a single file `block-parser.ts`
 
 `.Index.md`
 
@@ -69,6 +71,8 @@ Score: 3 (Medium)
   - Ensure it clearly defines properties related to escaping sequences and predicates, possibly including getters for easy access.
 - **Documentation improvements**: Consider adding comments or JSDoc above each method/class explaining their purpose. This enhances readability and maintainability.```
 ````
+
+Note that if you run without passing the `--types` option, it will only summarize exported functions, classes and variable declarations.
 
 `file-sys/.Index.md`
 
@@ -130,7 +134,8 @@ Options:
 -m, --model <model> Model name (default: "phi3:mini")
 -s, --service <service> Summarizer service: "openai" or "ollama" (default: "ollama")
 -u, --suggest Make improvement suggestions (default: false)
--t, --toc Table of Contents (default: true)
+-t, --toc Table of Contents (default: false)
+-y, --types Summarize types, interfaces and enums (default: false)
 -n, --analyze Perform code and complexity analysis (default: false)
 -f, --force Force processing of all files (default: false)
 -h, --help display help for command
@@ -176,22 +181,21 @@ generate-index-md ./data/parser --service ollama --model phi3:mini
 
 ## TODO
 
-- Add more run options (TOC, force, analysis) [x]
-- By default it should only process files in a folder modified/created since last timestamp (use `force` option to process all)
-- Add meta data at the top of each file (`timestamp`, `tags`) using YAML frontmatter
 - Cleanup option to delete all `.Index.md` files
-- For each entry if `analysis` is turned on [-]
-
-  - Complexity analysis
-    - Code entry complexity : 0-5 - Very Low (1), Low (2), Medium (3), High (4), Very High (5)
-    - File complexity: summarized complexity score based on number of entries and their complexity
-    - Folder complexity: depending on the number of files and subfolders and the total complexity of each
+- VS Code plugin
+- Improved complexity analysis and suggestions
+  - Folder complexity: depending on the number of files and subfolders and the total complexity of each
   - Refactoring suggestions
     - Entry
     - File
     - Folder
 
-- VS Code plugin
+## Done
+
+- Add more run options (TOC, force, analysis) [x]
+- By default it should only process files in a folder modified/created since last timestamp (use `force` option to process all) [x]
+- Add meta data at the top of each file (`timestamp`, `tags`) using YAML frontmatter [x]
+- For each entry if `analysis` is turned on [x]
 
 ### Metadata
 
@@ -206,8 +210,4 @@ How to [parse](https://peterbabic.dev/blog/yaml-metadata-in-markdown/) via:
 layout: post
 title: Blogging Like a Hacker
 ---
-```
-
-```
-
 ```

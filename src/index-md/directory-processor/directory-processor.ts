@@ -20,6 +20,7 @@ export class DirectoryProcessor {
   private _fileContent: string = "";
   fileSummaries: FileOrDirSummary[] = [];
   metaData: Record<string, any> = {};
+  frontmatterTimestamp?: Date;
 
   constructor(private readonly indexGenerator: IndexGenerator) {}
 
@@ -78,9 +79,10 @@ export class DirectoryProcessor {
   }
 
   wasFileModifiedAfterTimestamp(
-    frontmatterTimestamp: Date,
-    mostRecentlyChangedTimestamp: Date
+    frontmatterTimestamp?: Date,
+    mostRecentlyChangedTimestamp?: Date
   ) {
+    if (!frontmatterTimestamp || !mostRecentlyChangedTimestamp) return false;
     return mostRecentlyChangedTimestamp > frontmatterTimestamp;
   }
 
@@ -89,19 +91,20 @@ export class DirectoryProcessor {
     lv: number
   ): Promise<DirectorySummary | undefined> {
     console.log("processing", dirPath);
-    const mostRecentlyChanged = this.getMostRecentFileChangeDate(dirPath);
     const metadata = this.readFrontMatter(dirPath);
+    const mostRecentlyChanged = this.getMostRecentFileChangeDate(dirPath);
     const frontmatterTimestamp = new Date(metadata?.timestamp ?? 0);
-    if (frontmatterTimestamp && mostRecentlyChanged) {
-      if (
-        this.wasFileModifiedAfterTimestamp(
-          frontmatterTimestamp,
-          mostRecentlyChanged
-        )
-      ) {
-        console.log("skip folder, since not modified since last run");
-        return;
-      }
+    this.frontmatterTimestamp = frontmatterTimestamp;
+    const force = appContext.runtimeOpts.force;
+    if (
+      !force &&
+      this.wasFileModifiedAfterTimestamp(
+        frontmatterTimestamp,
+        mostRecentlyChanged
+      )
+    ) {
+      console.log("skip folder, since not modified since last run");
+      return;
     }
 
     const timestamp = this.createTimeStamp();
@@ -118,6 +121,17 @@ export class DirectoryProcessor {
         // uses Index file in subdir to make summary of the subdir
         await this.appendSubIndex(fullPath);
       } else if (this.isSourceFile(file)) {
+        const mostRecentlyChanged = this.getMostRecentFileChangeDate(file);
+        if (
+          !force &&
+          this.wasFileModifiedAfterTimestamp(
+            frontmatterTimestamp,
+            mostRecentlyChanged
+          )
+        ) {
+          console.log("skip file, since not modified since last run");
+          return;
+        }
         const fileSummary = await this.processFile(fullPath, file);
         this.fileSummaries.push(fileSummary);
         this.indexEntries.push(fileSummary.text);

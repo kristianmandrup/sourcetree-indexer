@@ -24,7 +24,8 @@ program
     "ollama"
   )
   .option("-u, --suggest", "Make improvement suggestions", false)
-  .option("-t, --toc", "Table of Contents", true)
+  .option("-t, --toc", "Table of Contents", false)
+  .option("-y, --types", "Summarize types, interfaces and enums", false)
   .option("-n, --analyze", "Perform code and complexity analysis", false)
   .option("-f, --force", "Force processing of all files", false)
   .action(async (dirPath, options) => {
@@ -34,6 +35,8 @@ program
       analyze: options.analyze,
       suggest: options.suggest,
       toc: options.toc,
+      types: options.types,
+      force: options.force,
     });
 
     if (options.service === "openai") {

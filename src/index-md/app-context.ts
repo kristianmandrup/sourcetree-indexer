@@ -4,6 +4,8 @@ export type RuntimeOpts = {
   toc?: boolean;
   analyze?: boolean;
   suggest?: boolean;
+  types?: boolean;
+  force?: boolean;
 };
 
 export class AppContext {

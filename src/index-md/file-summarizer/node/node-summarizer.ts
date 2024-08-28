@@ -2,7 +2,6 @@ import { ClassDeclaration, SyntaxKind } from "ts-morph";
 import { JsDocExtractor } from "./jsdoc-extractor";
 import { Summarizer } from "../../summarizer";
 import { SummarizableNode, NodeSummary, NodeKind } from "./types";
-import { appContext } from "../../app-context";
 import { CodeAnalyzer } from "../code-analyzer";
 import { CodeSuggester } from "../code-suggester";
 
