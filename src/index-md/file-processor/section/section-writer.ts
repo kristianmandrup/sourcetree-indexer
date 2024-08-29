@@ -17,18 +17,22 @@ export class SectionWriter {
     return anchor.link;
   }
 
-  h2(type: string, title: string) {
-    const link = this.generateAnchor(title);
-    return `### ${type}: ${link}`;
-  }
-
   get useAnchor() {
     return appContext.runtimeOpts.toc;
   }
 
+  h2(type: string, title: string) {
+    return this.hn(type, title, 2);
+  }
+
   h3(type: string, title: string) {
+    return this.hn(type, title, 3);
+  }
+
+  hn(type: string, title: string, lv: number) {
     const header = this.useAnchor ? this.generateAnchor(title) : title;
-    return `#### ${type}: ${header}`;
+    const hashes = this.h(lv);
+    return `${hashes} ${type}: ${header}`;
   }
 
   h(count: number): string {

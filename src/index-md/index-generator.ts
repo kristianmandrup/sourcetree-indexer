@@ -10,11 +10,13 @@ import {
 } from "./file-summarizer";
 import { DirectoryProcessor } from "./directory-processor/directory-processor";
 import { appContext } from "./app-context";
+import { OllamaSummarizer } from "./summarizer";
 
 export const generateIndexMd = async (
   dirPath: string,
-  summarizer: Summarizer
+  summarizer?: Summarizer
 ) => {
+  summarizer = summarizer ?? new OllamaSummarizer();
   new IndexGenerator(summarizer).generateIndexMd(dirPath);
 };
 

@@ -130,8 +130,7 @@ export class FileProcessor {
     fileName: string,
     fileText: string
   ): Promise<string> {
-    // TODO: use section writer
-    const title = `## File : ${fileName}`;
+    const title = new SectionWriter(fileName).hn("File", fileName, 2);
     const fileSummary = await this.summarizer.summarize(
       fileText,
       "Summarize the following in a single paragraph"

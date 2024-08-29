@@ -118,9 +118,13 @@ Link to install package on your system
 pnpm link
 ```
 
-Alternatively: use `npx` or install globally
-
 If you want to use OpenAI, define a key in a `.env` file (see `.env.example`)
+
+## Cleanup index files
+
+This tool will cleanup all the `.Index.md` files previously generated
+
+`node dist/cleanup.js ./data`
 
 ### Run options
 
@@ -181,6 +185,7 @@ generate-index-md ./data/parser --service ollama --model phi3:mini
 
 ## TODO
 
+- Optionally generate `.index.json` file with all the summary data of the folder
 - Cleanup option to delete all `.Index.md` files
 - Let tags bubble up from subfolder metadata?
 - Finder - search on index files with tags partly matching search term

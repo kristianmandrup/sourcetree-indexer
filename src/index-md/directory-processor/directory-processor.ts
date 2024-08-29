@@ -11,18 +11,26 @@ import { IndexGenerator } from "../index-generator";
 import { FileProcessor } from "../file-processor/file-processor";
 import { SectionWriter } from "../file-processor";
 import { appContext } from "../app-context";
-import { DirectorySummary, FileOrDirSummary, FileSummary } from "./types";
+import {
+  DirectorySummary,
+  FileOrDirSummary,
+  FileSummary,
+  SectionSummary,
+} from "./types";
 import { jsonToFrontmatterString } from "./json-to-frontmatter";
 import frontmatter from "gray-matter";
+import { BaseDirectoryProcessor } from "./base-dir-processor";
 
-export class DirectoryProcessor {
+export class DirectoryProcessor extends BaseDirectoryProcessor {
   private readonly indexEntries: string[] = [];
   private _fileContent: string = "";
   fileSummaries: FileOrDirSummary[] = [];
   metaData: Record<string, any> = {};
   frontmatterTimestamp?: Date;
 
-  constructor(private readonly indexGenerator: IndexGenerator) {}
+  constructor(private readonly indexGenerator: IndexGenerator) {
+    super();
+  }
 
   get fileProcessor(): FileProcessor {
     return new FileProcessor(this.fileSummarizer);
@@ -86,6 +94,11 @@ export class DirectoryProcessor {
     return mostRecentlyChangedTimestamp > frontmatterTimestamp;
   }
 
+  addFolderSection(file: string) {
+    const title = new SectionWriter(file).hn("Folder", file, 2);
+    this.indexEntries.push(title);
+  }
+
   public async processDirectory(
     dirPath: string,
     lv: number
@@ -106,14 +119,13 @@ export class DirectoryProcessor {
       console.log("skip folder, since not modified since last run");
       return;
     }
-
     const timestamp = this.createTimeStamp();
     this.addMetaData("timestamp", timestamp);
     const files = this.getDirectoryFiles(dirPath);
     for (const file of files) {
       const fullPath = path.join(dirPath, file);
       if (this.isDirectory(fullPath)) {
-        this.indexEntries.push(`## Folder : ${file}`);
+        this.addFolderSection(file);
         // Recursively process subdirectory
         // Creates a new instance of Process directory to ensure state isolation
         const dirSummary = await this.processSubDirectory(fullPath, lv++);
@@ -151,6 +163,7 @@ export class DirectoryProcessor {
       text: this.fileContent,
       files: this.fileSummaries,
       timestamp,
+      type: "folder",
     };
   }
 
@@ -266,10 +279,10 @@ export class DirectoryProcessor {
     text: string
   ): Promise<string | undefined> {
     if (!appContext.runtimeOpts.analyze) return;
-    const entry: NodeSummary = {
+    const entry: SectionSummary = {
       name: fullPath,
       text,
-      kind: "file",
+      type: "section",
     };
     const complexity = await new CodeAnalyzer().analyze(text, entry);
     entry.complexity = complexity;
@@ -282,10 +295,10 @@ export class DirectoryProcessor {
     text: string
   ): Promise<string | undefined> {
     if (!appContext.runtimeOpts.suggest) return;
-    const entry: NodeSummary = {
+    const entry: SectionSummary = {
       name: fullPath,
       text,
-      kind: "file",
+      type: "section",
     };
     const prompt =
       "Make suggestions for how to refactor the folder structure to adhere to best design practices";
