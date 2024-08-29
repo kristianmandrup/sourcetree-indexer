@@ -1,4 +1,4 @@
-import { appContext } from "../app-context";
+import { generateContext } from "../app-context";
 import { SectionSummary } from "../directory-processor/types";
 import { NodeSummary } from "./node";
 
@@ -27,7 +27,7 @@ export class CodeAnalyzer {
     code: string,
     entry?: NodeSummary | SectionSummary
   ): Promise<CodeComplexity | undefined> {
-    if (!appContext.runtimeOpts.analyze) return;
+    if (!generateContext.runtimeOpts.analyze) return;
     // console.log("Code complexity analysis for:", code);
     const complexity = await this.analyzeComplexity(code);
     if (entry) {
@@ -39,7 +39,7 @@ export class CodeAnalyzer {
   protected async analyzeComplexity(
     code: string
   ): Promise<CodeComplexity | undefined> {
-    const strScore = await appContext.summarizer?.summarize(
+    const strScore = await generateContext.summarizer?.summarize(
       code,
       "Estimate a complexity rating for the code as a number between 1-5 (1 = Very low, 2 = Low, 3 = Medium, 4 = High, 5 = Very high"
     );

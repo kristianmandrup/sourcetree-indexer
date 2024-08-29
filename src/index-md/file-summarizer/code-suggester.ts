@@ -1,4 +1,4 @@
-import { appContext } from "../app-context";
+import { generateContext } from "../app-context";
 import { SectionSummary } from "../directory-processor/types";
 import { NodeSummary } from "./node";
 
@@ -11,7 +11,7 @@ export class CodeSuggester {
   }
 
   async suggest(code: string, entry?: NodeSummary | SectionSummary) {
-    if (!appContext.runtimeOpts.suggest) return;
+    if (!generateContext.runtimeOpts.suggest) return;
     if (entry && entry.complexity && entry.complexity.score < 2) {
       console.log("not sufficiently complex to warrant any suggestions");
       return;
@@ -27,6 +27,6 @@ export class CodeSuggester {
   protected async getCodeImprovementSuggestions(
     code: string
   ): Promise<string | undefined> {
-    return await appContext.summarizer?.summarize(code, this.prompt);
+    return await generateContext.summarizer?.summarize(code, this.prompt);
   }
 }

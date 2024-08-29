@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist/types", // Output folder for types
+    "rootDir": "./src",
+    "declaration": true, // Generate .d.ts files
+    "emitDeclarationOnly": true, // Only emit declarations, not .js files
+    "declarationMap": true, // (Optional) Include .d.ts source maps
+    "strict": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

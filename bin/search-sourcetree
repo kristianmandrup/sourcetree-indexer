@@ -1,4 +1,4 @@
 #!/usr/bin/env node
 
 // Import and execute the generate script
-require("../dist/generate");
+require("../dist/find");

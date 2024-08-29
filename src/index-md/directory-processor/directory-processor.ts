@@ -9,7 +9,7 @@ import {
 import { IndexGenerator } from "../index-generator";
 import { FileProcessor } from "../file-processor/file-processor";
 import { SectionWriter } from "../file-processor";
-import { appContext } from "../app-context";
+import { generateContext } from "../app-context";
 import {
   DirectorySummary,
   FileOrDirSummary,
@@ -34,19 +34,6 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
 
   get fileProcessor(): FileProcessor {
     return new FileProcessor(this.fileSummarizer);
-  }
-
-  get indexFileName() {
-    return ".Index.md";
-  }
-
-  isDirectory(fullPath: string) {
-    const stats = fs.statSync(fullPath);
-    return stats.isDirectory();
-  }
-
-  getDirectoryFiles(dirPath: string) {
-    return fs.readdirSync(dirPath);
   }
 
   public async processRootDirectory(dirPath: string): Promise<void> {
@@ -108,7 +95,7 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
     const mostRecentlyChanged = this.getMostRecentFileChangeDate(dirPath);
     const frontmatterTimestamp = new Date(metadata?.timestamp ?? 0);
     this.frontmatterTimestamp = frontmatterTimestamp;
-    const force = appContext.runtimeOpts.force;
+    const force = generateContext.runtimeOpts.force;
     if (
       !force &&
       this.wasFileModifiedAfterTimestamp(
@@ -212,10 +199,6 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
     this.writeFileSync(indexFilePath, fullContent);
   }
 
-  get indexJsonFileName() {
-    return ".index.json";
-  }
-
   writeIndexJsonFileAt(dirPath: string, dirSummary: Record<string, any>) {
     // where to place Index file
     const indexFilePath = path.join(dirPath, this.indexJsonFileName);
@@ -249,7 +232,7 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   // process sub-folder Index.md file
   private async appendSubIndex(fullPath: string): Promise<void> {
     const subIndexPath = this.indexMdFileNameFor(fullPath);
-    if (this.hasFileAt(subIndexPath)) {
+    if (this.hasFileAtSync(subIndexPath)) {
       const complexitySection = await this.subfolderComplexity(fullPath);
       const suggestionsSection = this.subfolderSuggestions(fullPath);
       const title = `### Footer`;
@@ -283,7 +266,7 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   private async subfolderComplexity(
     fullPath: string
   ): Promise<string | undefined> {
-    if (!appContext.runtimeOpts.analyze) return;
+    if (!generateContext.runtimeOpts.analyze) return;
     const text = this.fileSummaries
       .map((sum) => {
         const sumText = sum.text;
@@ -307,7 +290,7 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   private async subfolderSuggestions(
     fullPath: string
   ): Promise<string | undefined> {
-    if (!appContext.runtimeOpts.suggest) return;
+    if (!generateContext.runtimeOpts.suggest) return;
     const aiSummary = await this.subfolderSummary(fullPath);
     const text = this.fileSummaries
       .map((sum) => {

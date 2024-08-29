@@ -1,1 +1,4 @@
 #!/usr/bin/env node
+
+// Import and execute the generate script
+require("../dist/cleanup");

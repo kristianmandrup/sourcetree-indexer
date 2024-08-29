@@ -1,5 +1,5 @@
 import moment from "moment";
-import { appContext } from "../app-context";
+import { generateContext } from "../app-context";
 import {
   CodeAnalyzer,
   CodeComplexity,
@@ -135,7 +135,7 @@ export class FileProcessor {
 
   // TODO: move to TOC builder
   async addTOC() {
-    if (!appContext.runtimeOpts.toc) return;
+    if (!generateContext.runtimeOpts.toc) return;
     if (this.indexEntries.length < 10) return;
     const tocSection = await this.generateFileTOC();
     this.indexHeader.unshift(tocSection);
@@ -188,7 +188,7 @@ export class FileProcessor {
   private async fileComplexitySection(
     text: string
   ): Promise<{ section?: string; complexity?: CodeComplexity } | undefined> {
-    if (!appContext.runtimeOpts.analyze) {
+    if (!generateContext.runtimeOpts.analyze) {
       // console.log("skip file analysis", appContext.runtimeOpts);
       return;
     }
@@ -207,7 +207,7 @@ export class FileProcessor {
   private async fileSuggestionsSection(
     text: string
   ): Promise<string | undefined> {
-    if (!appContext.runtimeOpts.suggest) {
+    if (!generateContext.runtimeOpts.suggest) {
       // console.log("skip file suggestions", appContext.runtimeOpts);
       return;
     }

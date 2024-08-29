@@ -6,8 +6,20 @@ export class BaseDirectoryProcessor {
     return ".Index.md";
   }
 
-  hasFileAt(filePath: string) {
+  get indexJsonFileName() {
+    return ".index.json";
+  }
+
+  getDirectoryFiles(dirPath: string) {
+    return fs.readdirSync(dirPath);
+  }
+
+  hasFileAtSync(filePath: string) {
     return fs.existsSync(filePath);
+  }
+
+  async hasFileAt(filePath: string) {
+    return await fs.exists(filePath);
   }
 
   isDirectory(fullPath: string) {
@@ -15,11 +27,11 @@ export class BaseDirectoryProcessor {
     return stats.isDirectory();
   }
 
-  getDirectoryFiles(dirPath: string) {
-    return fs.readdirSync(dirPath);
-  }
-
   indexMdFileNameFor(dirPath: string) {
     return path.join(dirPath, this.indexFileName);
+  }
+
+  indexJsonFileNameFor(dirPath: string) {
+    return path.join(dirPath, this.indexJsonFileName);
   }
 }

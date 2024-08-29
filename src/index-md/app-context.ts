@@ -1,6 +1,6 @@
 import { Summarizer } from "./summarizer";
 
-export type RuntimeOpts = {
+export type GenerateRuntimeOpts = {
   toc?: boolean;
   analyze?: boolean;
   suggest?: boolean;
@@ -8,15 +8,61 @@ export type RuntimeOpts = {
   force?: boolean;
 };
 
-export class AppContext {
-  runtimeOpts: RuntimeOpts;
+export type CleanupRuntimeOpts = {
+  json?: boolean;
+};
+
+export class CleanupContext {
+  runtimeOpts: CleanupRuntimeOpts;
   summarizer?: Summarizer;
 
-  constructor(runtimeOpts: RuntimeOpts = {}) {
+  constructor(runtimeOpts: CleanupRuntimeOpts = {}) {
     this.runtimeOpts = runtimeOpts;
   }
 
-  setOpts(runtimeOpts: RuntimeOpts = {}) {
+  setOpts(runtimeOpts: CleanupRuntimeOpts = {}) {
+    this.runtimeOpts = runtimeOpts;
+    return this;
+  }
+}
+
+export const createCleanupContext = (runtimeOpts: CleanupRuntimeOpts = {}) =>
+  new CleanupContext(runtimeOpts);
+
+export const cleanupContext = createCleanupContext();
+
+export type FindRuntimeOpts = {
+  tags?: string[];
+};
+
+export class FindContext {
+  runtimeOpts: FindRuntimeOpts;
+  summarizer?: Summarizer;
+
+  constructor(runtimeOpts: FindRuntimeOpts = {}) {
+    this.runtimeOpts = runtimeOpts;
+  }
+
+  setOpts(runtimeOpts: FindRuntimeOpts = {}) {
+    this.runtimeOpts = runtimeOpts;
+    return this;
+  }
+}
+
+export const createFindContext = (runtimeOpts: FindRuntimeOpts = {}) =>
+  new FindContext(runtimeOpts);
+
+export const findContext = createFindContext();
+
+export class GenerateContext {
+  runtimeOpts: GenerateRuntimeOpts;
+  summarizer?: Summarizer;
+
+  constructor(runtimeOpts: GenerateRuntimeOpts = {}) {
+    this.runtimeOpts = runtimeOpts;
+  }
+
+  setOpts(runtimeOpts: GenerateRuntimeOpts = {}) {
     this.runtimeOpts = runtimeOpts;
     return this;
   }
@@ -27,7 +73,7 @@ export class AppContext {
   }
 }
 
-export const createAppContext = (runtimeOpts: RuntimeOpts = {}) =>
-  new AppContext(runtimeOpts);
+export const createGenerateContext = (runtimeOpts: GenerateRuntimeOpts = {}) =>
+  new GenerateContext(runtimeOpts);
 
-export const appContext = createAppContext();
+export const generateContext = createGenerateContext();

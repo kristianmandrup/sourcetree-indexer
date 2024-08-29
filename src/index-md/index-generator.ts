@@ -9,7 +9,7 @@ import {
   NodeSummarizer,
 } from "./file-summarizer";
 import { DirectoryProcessor } from "./directory-processor/directory-processor";
-import { appContext } from "./app-context";
+import { generateContext } from "./app-context";
 import { OllamaSummarizer } from "./summarizer";
 
 export const generateIndexMd = async (
@@ -49,7 +49,7 @@ class IndexGenerator {
       ? createFileSummarizer(nodeSummarizer, fileProcessor)
       : new FileSummarizer(nodeSummarizer, fileProcessor);
 
-    appContext.summarizer = summarizer;
+    generateContext.summarizer = summarizer;
   }
 
   public async generateIndexMd(dirPath: string) {

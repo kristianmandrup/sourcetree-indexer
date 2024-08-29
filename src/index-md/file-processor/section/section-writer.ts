@@ -1,7 +1,7 @@
 import path from "path";
 import { NodeSummary } from "../../file-summarizer";
 import { Anchor } from "./anchor";
-import { appContext } from "../../app-context";
+import { generateContext } from "../../app-context";
 import { SectionSummary } from "../../directory-processor/types";
 
 export class SectionWriter {
@@ -18,7 +18,7 @@ export class SectionWriter {
   }
 
   get useAnchor() {
-    return appContext.runtimeOpts.toc;
+    return generateContext.runtimeOpts.toc;
   }
 
   h2(type: string, title: string) {

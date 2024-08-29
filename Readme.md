@@ -1,6 +1,14 @@
-# AI Code Indexer
+# Sourcetree indexer
 
-Recursively iterates through a folder structure for a given folder:
+The Sourcetree indexer contains the following tools:
+
+- Indexer: `index-sourcetree`
+- Searcher: `search-sourcetree`
+- Cleaner: `cleanup-indexes`
+
+## Indexer
+
+Recursively iterates through a folder structure:
 
 Inside each folder:
 
@@ -9,7 +17,18 @@ Inside each folder:
 
 This can be useful for a human developer or AI agent to quickly get an overall idea of what is inside the folders of an existing project.
 
-## Example output
+## Searcher
+
+Recursively iterates through a folder structure and examines index files generated previously.
+
+- Searches `.Index.md` markdown file for a match
+- Searches `.index.json` for a match (optional)
+
+## Cleaner
+
+Recursively iterates through a folder structure and cleans up (ie. deletes) index files generated previously.
+
+## Generator: Example output
 
 The tool can now generate YAML frontmatter with metadata in the `Index.md` file. This can be used for the agent to quickly determine the relevance of the folder.
 As the tool runs, it will check the last modified date of each folder/file and compare each with the timestamp from the `Index.md` metadata.

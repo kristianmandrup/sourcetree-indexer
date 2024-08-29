@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import {
-  appContext,
+  generateContext,
   generateIndexMd,
   OllamaSummarizer,
   OpenAISummarizer,
@@ -31,7 +31,7 @@ program
   .action(async (dirPath, options) => {
     let summarizer;
 
-    appContext.setOpts({
+    generateContext.setOpts({
       analyze: options.analyze,
       suggest: options.suggest,
       toc: options.toc,

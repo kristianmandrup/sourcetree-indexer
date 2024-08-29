@@ -3,7 +3,7 @@ import { NodeProcessor } from "./node";
 import { NodeSummary } from "./node/types";
 import { NodeSummarizer } from "./node";
 import { SourceFileProcessor } from "./source-file-processor";
-import { appContext } from "../app-context";
+import { generateContext } from "../app-context";
 
 export class FileSummarizer {
   private nodeSummaryProcessor: NodeProcessor;
@@ -41,7 +41,7 @@ export class FileSummarizer {
       sourceFile.getVariableDeclarations.bind(sourceFile),
     ];
 
-    if (appContext.runtimeOpts.types) {
+    if (generateContext.runtimeOpts.types) {
       nodeProcessors.push(...typeNodeProcessors);
     }
     return nodeProcessors;
