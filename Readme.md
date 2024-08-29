@@ -2,7 +2,10 @@
 
 Recursively iterates through a folder structure for a given folder:
 
-- Generates an `.Index.md` file inside each folder summarizing it from a code perspective.
+Inside each folder:
+
+- Generates an `.Index.md` markdown file, summarizing the folder from a code perspective.
+- Generates an `.index.json` file, with a JSON summary, ideal for agents and other tools to use
 
 This can be useful for a human developer or AI agent to quickly get an overall idea of what is inside the folders of an existing project.
 
@@ -124,7 +127,11 @@ If you want to use OpenAI, define a key in a `.env` file (see `.env.example`)
 
 This tool will cleanup all the `.Index.md` files previously generated
 
-`node dist/cleanup.js ./data`
+`node dist/cleanup.js ./lib/components`
+
+Via binary
+
+`cleanup-indexes ./lib/components`
 
 ### Run options
 
@@ -152,13 +159,13 @@ See [Available models](https://platform.openai.com/docs/models) here
 Run with OpenAI model (format)
 
 ```bash
-generate-index-md <dirPath> --apiKey <your-api-key> --service openai --model <model>
+index-sourcetree <dirPath> --apiKey <your-api-key> --service openai --model <model>
 ```
 
 Example
 
 ```bash
-generate-index-md ./data/parser --service openai --model gpt-4
+index-sourcetree ./data/parser --service openai --model gpt-4
 ```
 
 ### Ollama
@@ -174,23 +181,20 @@ ollama run phi3:mini
 Run with Ollama model (format)
 
 ```bash
-generate-index-md <dirPath> --service ollama --model <model>
+index-sourcetree <dirPath> --service ollama --model <model>
 ```
 
 Example
 
 ```bash
-generate-index-md ./data/parser --service ollama --model phi3:mini
+index-sourcetree ./data/parser --service ollama --model phi3:mini
 ```
 
 ## TODO
 
-- Optionally generate `.index.json` file with all the summary data of the folder
-- Cleanup option to delete all `.Index.md` files
-- Let tags bubble up from subfolder metadata?
-- Finder - search on index files with tags partly matching search term
+- Let tags bubble up from subfolder metadata
+- Finder: search on `.index.json` files that have tags or filenames/folders matching search term
 - Generate proper TOCs using slugs stored on summaries [-]
-  - Done for Node summaries - requires testing
 - Improved complexity analysis and suggestions
   - Folder complexity: depending on the number of files and subfolders and the total complexity of each
   - Refactoring suggestions
