@@ -26,6 +26,8 @@ export class FileProcessor {
   private _body = "";
   summaries: NodeSummary[] = [];
   footerSummaries: SectionSummary[] = [];
+  fileSummary?: string;
+  tags: string[] = [];
 
   constructor(fileSummarizer: FileSummarizer) {
     this.fileSummarizer = fileSummarizer;
@@ -60,6 +62,7 @@ export class FileProcessor {
       text: fullFileText,
       timestamp,
       nodes: summaries,
+      tags: this.tags,
       type: "file",
     };
   }
@@ -97,7 +100,28 @@ export class FileProcessor {
 
   private async processHeader(): Promise<void> {
     await this.addFileSummary();
+    await this.addTags();
     await this.addTOC();
+  }
+
+  // TODO
+  async addTags() {
+    const tags = await this.suggestTags();
+    this.tags = tags;
+  }
+
+  async suggestTags() {
+    const summariesText = this.summaries.map((sum) => sum.text).join("\n\n");
+    const tags = await this.summarizer.summarize(
+      summariesText,
+      `Based on the following, return ONLY a comma separated list of 1-4 tags. The tags should center around concepts or domains the code can help with. Do not return any other text in your response.`
+    );
+    const tagList = tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => !/typescript/i.test(tag));
+    console.log({ tagList });
+    return tagList;
   }
 
   async addFileSummary() {
@@ -105,6 +129,7 @@ export class FileProcessor {
       this.fileName,
       this.bodyText
     );
+    this.fileSummary = fileSummary;
     this.indexHeader.push(fileSummary);
   }
 
@@ -147,7 +172,7 @@ export class FileProcessor {
 
   private async generateFooter(): Promise<string | undefined> {
     // TODO: use section writer?
-    const title = `### Footer`;
+    const title = new SectionWriter(this.fileName).hn("Footer", "analysis", 3);
 
     const result = await this.fileComplexitySection(this.bodyText);
     if (!result) return;

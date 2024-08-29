@@ -4,7 +4,6 @@ import path from "path";
 import {
   CodeAnalyzer,
   CodeSuggester,
-  NodeSummary,
   SUPPORTED_EXTENSIONS,
 } from "../file-summarizer";
 import { IndexGenerator } from "../index-generator";
@@ -16,6 +15,7 @@ import {
   FileOrDirSummary,
   FileSummary,
   SectionSummary,
+  SummaryType,
 } from "./types";
 import { jsonToFrontmatterString } from "./json-to-frontmatter";
 import frontmatter from "gray-matter";
@@ -152,19 +152,23 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
     // await this.appendComplexity(dirPath, this.fileContent);
     // await this.appendSuggestions(dirPath, this.fileContent);
     const tags = await this.suggestTags();
-    console.log({ tags });
     this.addMetaData("tags", tags);
     // Write .Index.md for the current directory
-    if (lv > 0) {
-      this.writeIndexFileAt(dirPath);
-    }
-    return {
+    const dirSummary = {
       name: dirPath,
       text: this.fileContent,
       files: this.fileSummaries,
+      tags,
       timestamp,
-      type: "folder",
+      type: "folder" as SummaryType,
     };
+
+    if (lv > 0) {
+      this.writeIndexFileAt(dirPath);
+      this.writeIndexJsonFileAt(dirPath, dirSummary);
+    }
+
+    return dirSummary;
   }
 
   get fileSummaryContent() {
@@ -208,6 +212,16 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
     this.writeFileSync(indexFilePath, fullContent);
   }
 
+  get indexJsonFileName() {
+    return ".index.json";
+  }
+
+  writeIndexJsonFileAt(dirPath: string, dirSummary: Record<string, any>) {
+    // where to place Index file
+    const indexFilePath = path.join(dirPath, this.indexJsonFileName);
+    this.writeFileSync(indexFilePath, JSON.stringify(dirSummary, null, 2));
+  }
+
   writeFileSync(filePath: string, content: string) {
     fs.writeFileSync(filePath, content);
   }
@@ -236,12 +250,8 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   private async appendSubIndex(fullPath: string): Promise<void> {
     const subIndexPath = this.indexMdFileNameFor(fullPath);
     if (this.hasFileAt(subIndexPath)) {
-      const aiSummary = await this.subfolderSummary(subIndexPath);
-      const complexitySection = await this.subfolderComplexity(
-        fullPath,
-        aiSummary
-      );
-      const suggestionsSection = this.subfolderSuggestions(fullPath, aiSummary);
+      const complexitySection = await this.subfolderComplexity(fullPath);
+      const suggestionsSection = this.subfolderSuggestions(fullPath);
       const title = `### Footer`;
       const sections = [title, complexitySection, suggestionsSection].filter(
         (sec) => sec
@@ -271,10 +281,18 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   }
 
   private async subfolderComplexity(
-    fullPath: string,
-    text: string
+    fullPath: string
   ): Promise<string | undefined> {
     if (!appContext.runtimeOpts.analyze) return;
+    const text = this.fileSummaries
+      .map((sum) => {
+        const sumText = sum.text;
+        const complexityText = sum.complexity
+          ? `Complexity: ${sum.complexity}`
+          : undefined;
+        return complexityText ? [sumText, complexityText].join("\n") : sumText;
+      })
+      .join("\n\n");
     const entry: SectionSummary = {
       name: fullPath,
       text,
@@ -287,13 +305,26 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   }
 
   private async subfolderSuggestions(
-    fullPath: string,
-    text: string
+    fullPath: string
   ): Promise<string | undefined> {
     if (!appContext.runtimeOpts.suggest) return;
+    const aiSummary = await this.subfolderSummary(fullPath);
+    const text = this.fileSummaries
+      .map((sum) => {
+        const sumText = sum.text;
+        const tagsText = sum.tags ? `Tags: ${sum.tags}` : undefined;
+        const complexityText = sum.complexity
+          ? `Complexity: ${sum.complexity}`
+          : undefined;
+        return [sumText, tagsText, complexityText]
+          .filter((text) => text)
+          .join("\n\n");
+      })
+      .join("\n\n");
+
     const entry: SectionSummary = {
       name: fullPath,
-      text,
+      text: aiSummary,
       type: "section",
     };
     const prompt =

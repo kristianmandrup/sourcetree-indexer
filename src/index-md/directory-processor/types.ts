@@ -7,6 +7,7 @@ export type BaseSummary = {
   text: string;
   timestamp?: string;
   type: SummaryType;
+  tags?: string[];
   slug?: string;
   lv?: number;
 };
