@@ -250,10 +250,6 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
     }
   }
 
-  hasFileAt(filePath: string) {
-    return fs.existsSync(filePath);
-  }
-
   async suggestTags() {
     const tags = await this.summarizer.summarize(
       this.fileSummaryContent,

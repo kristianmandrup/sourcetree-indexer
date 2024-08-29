@@ -21,6 +21,7 @@ export class DirectoryCleaner extends BaseDirectoryProcessor {
   }
 
   protected deleteFileSync(filePath: string) {
+    if (!this.hasFileAt(filePath)) return;
     fs.removeSync(filePath);
   }
 

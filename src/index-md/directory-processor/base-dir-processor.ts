@@ -6,6 +6,10 @@ export class BaseDirectoryProcessor {
     return ".Index.md";
   }
 
+  hasFileAt(filePath: string) {
+    return fs.existsSync(filePath);
+  }
+
   isDirectory(fullPath: string) {
     const stats = fs.statSync(fullPath);
     return stats.isDirectory();
