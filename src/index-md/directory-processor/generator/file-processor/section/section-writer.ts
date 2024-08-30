@@ -1,8 +1,8 @@
 import path from "path";
-import { NodeSummary } from "../../file-summarizer";
 import { Anchor } from "./anchor";
-import { generateContext } from "../../app-context";
-import { SectionSummary } from "../../directory-processor/types";
+import { generateContext } from "../../context";
+import { SectionSummary } from "../../";
+import { NodeSummary } from "../file-summarizer";
 
 export class SectionWriter {
   anchor: Anchor;

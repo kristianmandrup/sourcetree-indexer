@@ -1,15 +1,15 @@
 import { ClassDeclaration, SyntaxKind } from "ts-morph";
 import { JsDocExtractor } from "./jsdoc-extractor";
-import { Summarizer } from "../../summarizer";
+import { ISummarizer } from "../../../../../summarizer";
 import { SummarizableNode, NodeSummary, NodeKind } from "./types";
 import { CodeAnalyzer } from "../code-analyzer";
 import { CodeSuggester } from "../code-suggester";
 
 export class NodeSummarizer {
-  public summarizer: Summarizer;
+  public summarizer: ISummarizer;
   private jsDocExtractor: JsDocExtractor;
 
-  constructor(summarizer: Summarizer, jsDocExtractor?: JsDocExtractor) {
+  constructor(summarizer: ISummarizer, jsDocExtractor?: JsDocExtractor) {
     this.summarizer = summarizer;
     this.jsDocExtractor = jsDocExtractor || new JsDocExtractor();
   }

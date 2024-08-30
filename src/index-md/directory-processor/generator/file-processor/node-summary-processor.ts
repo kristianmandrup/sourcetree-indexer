@@ -1,4 +1,4 @@
-import { NodeSummary } from "../file-summarizer";
+import { NodeSummary } from "./file-summarizer";
 import { ProcessClassSummary } from "./process-class-summary";
 import { SectionWriter } from "./section";
 
@@ -34,7 +34,7 @@ export class NodeSummaryProcessor {
 
   sortSummaries(summaries: NodeSummary[]) {
     const sortable = summaries.map((summary) => this.addSortNumber(summary));
-    return summaries.toSorted((a, b) => (a.sortNum || 0) - (b.sortNum || 0));
+    return summaries.sort((a, b) => (a.sortNum || 0) - (b.sortNum || 0));
   }
 
   kindSortMap: Record<string, number> = {

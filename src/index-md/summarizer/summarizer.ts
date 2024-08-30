@@ -1,12 +1,26 @@
 import { OpenAISummarizer } from "./openai-summarizer";
 import { OllamaSummarizer } from "./ollama-summarizer";
 
-export interface Summarizer {
+export interface ISummarizer {
   summarize(text: string, prompt?: string): Promise<string>;
 }
 
+export abstract class BaseSummarizer implements ISummarizer {
+  defaultQuestion = `Please provide a concise and clear summary of the following`;
+
+  abstract summarize(text: string, prompt?: string): Promise<string>;
+
+  protected createPrompt(question: string, text: string) {
+    return `${question}:\n\n"${text}"`;
+  }
+
+  protected stripQuotes(text: string): string {
+    return text.replace(/^"|"$/g, "");
+  }
+}
+
 export class AISummarizer {
-  private summarizer: Summarizer;
+  private summarizer: ISummarizer;
 
   constructor(provider: "openai" | "ollama") {
     if (provider === "openai") {

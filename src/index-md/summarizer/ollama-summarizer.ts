@@ -1,26 +1,18 @@
 import { ChatOllama } from "@langchain/ollama";
-import { type Summarizer } from "./summarizer"; // Assuming you have a common Summarizer interface
+import { BaseSummarizer, type ISummarizer } from "./summarizer"; // Assuming you have a common Summarizer interface
 
-export class OllamaSummarizer implements Summarizer {
+export class OllamaSummarizer extends BaseSummarizer {
   private model: ChatOllama;
 
   constructor(modelName: string = "llama3") {
+    super();
     this.model = new ChatOllama({
       model: modelName,
     });
   }
 
-  private createPrompt(question: string, text: string) {
-    return `${question} (keep it very brief and to the point):\n\n"${text}"`;
-  }
-
-  stripQuotes(text: string): string {
-    return text.replace(/^"|"$/g, "");
-  }
-
   public async summarize(text: string, question?: string): Promise<string> {
-    const defaultQuestion = `Please provide a concise and clear summary of the following`;
-    const prompt = this.createPrompt(question || defaultQuestion, text);
+    const prompt = this.createPrompt(question || this.defaultQuestion, text);
     const response = await this.model.invoke(["human", prompt]);
     const { content } = response;
     if (content.length > 0) {

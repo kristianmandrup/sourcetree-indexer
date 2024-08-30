@@ -1,13 +1,8 @@
 import { Command } from "commander";
 import {
-  generateContext,
-  DirectoryProcessor,
-  generateIndexMd,
-  OllamaSummarizer,
-  OpenAISummarizer,
   cleanupContext,
-} from "./index-md";
-import { DirectoryCleaner } from "./index-md/directory-processor/directory-cleaner";
+  DirectoryCleaner,
+} from "./index-md/directory-processor/cleaner";
 
 const program = new Command();
 

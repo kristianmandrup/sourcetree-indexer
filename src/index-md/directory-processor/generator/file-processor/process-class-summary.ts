@@ -1,4 +1,4 @@
-import { NodeSummary } from "../file-summarizer";
+import { NodeSummary } from "./file-summarizer";
 import { SectionWriter } from "./section";
 
 export class ProcessClassSummary {

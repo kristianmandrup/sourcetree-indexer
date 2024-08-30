@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import { BaseDirectoryProcessor } from "./base-dir-processor";
+import { BaseDirectoryProcessor } from "../base-dir-processor";
 
 type IndexMatch = {
   dirPath: string;

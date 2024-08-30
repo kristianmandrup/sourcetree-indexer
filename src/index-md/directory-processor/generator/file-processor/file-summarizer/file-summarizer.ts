@@ -3,7 +3,7 @@ import { NodeProcessor } from "./node";
 import { NodeSummary } from "./node/types";
 import { NodeSummarizer } from "./node";
 import { SourceFileProcessor } from "./source-file-processor";
-import { generateContext } from "../app-context";
+import { generateContext } from "../../context";
 
 export class FileSummarizer {
   private nodeSummaryProcessor: NodeProcessor;

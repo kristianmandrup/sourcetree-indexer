@@ -8,7 +8,7 @@ import {
   VariableDeclaration,
 } from "ts-morph";
 import { CodeComplexity } from "../code-analyzer";
-import { BaseSummary } from "../../directory-processor/types";
+import { BaseSummary } from "../../../";
 
 export type NodeKind =
   | "class"

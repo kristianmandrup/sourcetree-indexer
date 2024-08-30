@@ -1,25 +1,24 @@
 import moment from "moment";
 import fs from "fs-extra";
 import path from "path";
+import frontmatter from "gray-matter";
+import { BaseDirectoryProcessor } from "../base-dir-processor";
+import { generateContext } from "./context";
+import { FileProcessor, SectionWriter } from "./file-processor";
 import {
+  SUPPORTED_EXTENSIONS,
   CodeAnalyzer,
   CodeSuggester,
-  SUPPORTED_EXTENSIONS,
-} from "../file-summarizer";
-import { IndexGenerator } from "../index-generator";
-import { FileProcessor } from "../file-processor/file-processor";
-import { SectionWriter } from "../file-processor";
-import { generateContext } from "../app-context";
-import {
-  DirectorySummary,
-  FileOrDirSummary,
-  FileSummary,
-  SectionSummary,
-  SummaryType,
-} from "./types";
+} from "./file-processor/file-summarizer";
+import { IndexGenerator } from "./index-generator";
 import { jsonToFrontmatterString } from "./json-to-frontmatter";
-import frontmatter from "gray-matter";
-import { BaseDirectoryProcessor } from "./base-dir-processor";
+import {
+  FileOrDirSummary,
+  DirectorySummary,
+  SummaryType,
+  SectionSummary,
+  FileSummary,
+} from "./types";
 
 export class DirectoryProcessor extends BaseDirectoryProcessor {
   private readonly indexEntries: string[] = [];

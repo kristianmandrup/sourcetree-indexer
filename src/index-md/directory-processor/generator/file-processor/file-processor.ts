@@ -1,19 +1,15 @@
 import moment from "moment";
-import { generateContext } from "../app-context";
-import {
-  CodeAnalyzer,
-  CodeComplexity,
-  CodeSuggester,
-  FileSummarizer,
-  NodeSummary,
-} from "../file-summarizer";
+import { BaseSummary, FileSummary, SectionSummary } from "../";
 import { NodeSummaryProcessor } from "./node-summary-processor";
 import { SectionWriter } from "./section";
+import { generateContext } from "../context";
 import {
-  BaseSummary,
-  FileSummary,
-  SectionSummary,
-} from "../directory-processor/types";
+  FileSummarizer,
+  NodeSummary,
+  CodeComplexity,
+  CodeAnalyzer,
+  CodeSuggester,
+} from "./file-summarizer";
 
 export class FileProcessor {
   private readonly fileSummarizer: FileSummarizer;

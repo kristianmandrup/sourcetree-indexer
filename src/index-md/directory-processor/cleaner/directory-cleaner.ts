@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs-extra";
-import { BaseDirectoryProcessor } from "./base-dir-processor";
-import { cleanupContext } from "../app-context";
+import { BaseDirectoryProcessor } from "../base-dir-processor";
+import { cleanupContext } from "./context";
 
 export class DirectoryCleaner extends BaseDirectoryProcessor {
   public async deleteIndexFiles(

@@ -3,7 +3,7 @@
 The Sourcetree indexer contains the following tools:
 
 - Indexer: `index-sourcetree`
-- Searcher: `search-sourcetree`
+- Searcher: `search-sourcetree` (WIP)
 - Cleaner: `cleanup-indexes`
 
 ## Indexer
@@ -209,6 +209,23 @@ Example
 index-sourcetree ./data/parser --service ollama --model phi3:mini
 ```
 
+## Using an alternative AI or LLM
+
+Simply implement create an `ISummarier` implementation or extend the `BaseSummarizer` class.
+
+```ts
+class MySummarizer extends BaseSummarizer {
+  abstract summarize(text: string, prompt?: string): Promise<string> {
+    // ...
+    return responseMessage;
+  }
+}
+
+const mySummarizer = new MySummarizer(model);
+
+await generateIndexMd(dirPath, mySummarizer);
+```
+
 ## TODO
 
 - Let tags bubble up from subfolder metadata
@@ -220,6 +237,9 @@ index-sourcetree ./data/parser --service ollama --model phi3:mini
     - Entry
     - File
     - Folder
+- Refactor
+  - Split each step into `SummariesGenerator` and `SummariesProcessor`
+  - Split into more classes (Single Responsibility)
 - VS Code plugin
 
 ### Metadata

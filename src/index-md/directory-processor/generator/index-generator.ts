@@ -1,20 +1,20 @@
 import fs from "fs-extra";
 import path from "path";
-import { Summarizer } from "./summarizer/summarizer";
+import { ISummarizer } from "../../summarizer/summarizer";
 import {
   FileSummarizer,
   SUPPORTED_EXTENSIONS,
   NodeSummary,
   SourceFileProcessor,
   NodeSummarizer,
-} from "./file-summarizer";
-import { DirectoryProcessor } from "./directory-processor/directory-processor";
-import { generateContext } from "./app-context";
-import { OllamaSummarizer } from "./summarizer";
+} from "./file-processor/file-summarizer";
+import { DirectoryProcessor } from "./directory-processor";
+import { generateContext } from "./context";
+import { OllamaSummarizer } from "../../summarizer";
 
 export const generateIndexMd = async (
   dirPath: string,
-  summarizer?: Summarizer
+  summarizer?: ISummarizer
 ) => {
   summarizer = summarizer ?? new OllamaSummarizer();
   new IndexGenerator(summarizer).generateIndexMd(dirPath);
@@ -22,7 +22,7 @@ export const generateIndexMd = async (
 
 export type IndexGeneratorOpts = {
   fileProcessor?: SourceFileProcessor;
-  createNodeSummarizer?: (summarizer: Summarizer) => NodeSummarizer;
+  createNodeSummarizer?: (summarizer: ISummarizer) => NodeSummarizer;
   createFileSummarizer?: (
     nodeSummarizer: NodeSummarizer,
     fileProcessor?: SourceFileProcessor
@@ -30,11 +30,11 @@ export type IndexGeneratorOpts = {
 };
 
 class IndexGenerator {
-  public summarizer: Summarizer;
+  public summarizer: ISummarizer;
   public fileSummarizer: FileSummarizer;
 
   constructor(
-    summarizer: Summarizer,
+    summarizer: ISummarizer,
     {
       fileProcessor,
       createNodeSummarizer,

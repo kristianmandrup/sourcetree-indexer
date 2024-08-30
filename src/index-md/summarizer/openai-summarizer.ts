@@ -7,12 +7,13 @@ import {
   type MessageContentText,
 } from "@langchain/core/messages";
 import { ChatOpenAI } from "@langchain/openai";
-import { Summarizer } from "./summarizer";
+import { BaseSummarizer, ISummarizer } from "./summarizer";
 
-export class OpenAISummarizer implements Summarizer {
+export class OpenAISummarizer extends BaseSummarizer {
   private model: ChatOpenAI;
 
   constructor(modelName: string = "gpt-4o", apiKey?: string) {
+    super();
     const openAIApiKey = apiKey || process.env.OPENAI_API_KEY!;
     if (!openAIApiKey) {
       throw new Error("Missing OpenAI key");
@@ -24,17 +25,8 @@ export class OpenAISummarizer implements Summarizer {
     });
   }
 
-  private createPrompt(question: string, text: string) {
-    return `${question}:\n\n"${text}"`;
-  }
-
-  stripQuotes(text: string): string {
-    return text.replace(/^"|"$/g, "");
-  }
-
   public async summarize(text: string, question?: string): Promise<string> {
-    const defaultQuestion = `Please provide a concise and clear summary of the following`;
-    const prompt = this.createPrompt(question || defaultQuestion, text);
+    const prompt = this.createPrompt(question || this.defaultQuestion, text);
     const response = await this.model.invoke([new HumanMessage(prompt)]);
     if (response instanceof AIMessage) {
       const { content } = response;

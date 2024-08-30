@@ -1,5 +1,5 @@
-import { generateContext } from "../app-context";
-import { SectionSummary } from "../directory-processor/types";
+import { generateContext } from "../../context";
+import { SectionSummary } from "../../";
 import { NodeSummary } from "./node";
 
 export type ComplexityLabel =

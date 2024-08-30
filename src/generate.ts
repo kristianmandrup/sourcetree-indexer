@@ -1,10 +1,7 @@
 import { Command } from "commander";
-import {
-  generateContext,
-  generateIndexMd,
-  OllamaSummarizer,
-  OpenAISummarizer,
-} from "./index-md";
+import { OllamaSummarizer, OpenAISummarizer } from "./index-md";
+import { generateContext } from "./index-md/directory-processor/generator";
+import { generateIndexMd } from "./index-md/directory-processor/generator/index-generator";
 
 const program = new Command();
 

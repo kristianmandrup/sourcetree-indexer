@@ -1,4 +1,4 @@
-import { CodeComplexity, NodeSummary } from "../file-summarizer";
+import { CodeComplexity, NodeSummary } from "./file-processor/file-summarizer";
 
 export type SummaryType = "file" | "folder" | "section" | "node";
 
