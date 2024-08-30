@@ -27,12 +27,12 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   metaData: Record<string, any> = {};
   frontmatterTimestamp?: Date;
 
-  constructor(private readonly indexGenerator: IndexGenerator) {
+  constructor() {
     super();
   }
 
   get fileProcessor(): FileProcessor {
-    return new FileProcessor(this.fileSummarizer);
+    return new FileProcessor(this.fileSystem);
   }
 
   public async processRootDirectory(dirPath: string): Promise<void> {
@@ -47,10 +47,7 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
     dirPath: string,
     lv: number
   ): Promise<DirectorySummary | undefined> {
-    return new DirectoryProcessor(this.indexGenerator).processDirectory(
-      dirPath,
-      lv
-    );
+    return new DirectoryProcessor().processDirectory(dirPath, lv);
   }
 
   createTimeStamp() {
@@ -107,7 +104,7 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
     }
     const timestamp = this.createTimeStamp();
     this.addMetaData("timestamp", timestamp);
-    const files = this.getDirectoryFiles(dirPath);
+    const files = await this.getDirectoryFiles(dirPath);
     for (const file of files) {
       const fullPath = path.join(dirPath, file);
       if (this.isDirectory(fullPath)) {
@@ -209,11 +206,11 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   }
 
   get summarizer() {
-    return this.indexGenerator.summarizer;
+    return generateContext.summarizer;
   }
 
   get fileSummarizer() {
-    return this.indexGenerator.fileSummarizer;
+    return generateContext.fileSummarizer;
   }
 
   readFileSync(filePath: string) {
@@ -231,7 +228,7 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   // process sub-folder Index.md file
   private async appendSubIndex(fullPath: string): Promise<void> {
     const subIndexPath = this.indexMdFileNameFor(fullPath);
-    if (this.hasFileAtSync(subIndexPath)) {
+    if (await this.hasFileAt(subIndexPath)) {
       const complexitySection = await this.subfolderComplexity(fullPath);
       const suggestionsSection = this.subfolderSuggestions(fullPath);
       const title = `### Footer`;
@@ -243,10 +240,11 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   }
 
   async suggestTags() {
-    const tags = await this.summarizer.summarize(
+    const tags = await this.summarizer?.summarize(
       this.fileSummaryContent,
       `Based on the following, return ONLY a comma separated list of 1-6 tags. The tags should center around concepts or domains the code can help with. Do not return any other text in your response.`
     );
+    if (!tags) return [];
     const tagList = tags
       .split(",")
       .map((tag) => tag.trim())
@@ -257,7 +255,8 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
 
   private async subfolderSummary(filePath: string) {
     const content = await this.readFile(filePath);
-    const aiSummary = await this.summarizer.summarize(content);
+    const aiSummary = await this.summarizer?.summarize(content);
+    if (!aiSummary) return;
     this.indexEntries.push(aiSummary);
     return aiSummary;
   }
@@ -291,6 +290,7 @@ export class DirectoryProcessor extends BaseDirectoryProcessor {
   ): Promise<string | undefined> {
     if (!generateContext.runtimeOpts.suggest) return;
     const aiSummary = await this.subfolderSummary(fullPath);
+    if (!aiSummary) return;
     const text = this.fileSummaries
       .map((sum) => {
         const sumText = sum.text;

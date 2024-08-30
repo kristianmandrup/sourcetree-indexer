@@ -226,6 +226,20 @@ const mySummarizer = new MySummarizer(model);
 await generateIndexMd(dirPath, mySummarizer);
 ```
 
+## Using an alternative File system
+
+You can use an alternative file system, such as an In-memory FS, simply by setting the `fileSystem` instance variable of any `DirectoryProcessor`.
+Simply implement the `IFileSystem` interface and set it.
+
+```ts
+class new MyFileSystem implements IFileSystem {
+  // ...
+}
+
+const processor = new DirectoryProcessor()
+processor.fileSystem = new MyFileSystem()
+```
+
 ## TODO
 
 - Let tags bubble up from subfolder metadata

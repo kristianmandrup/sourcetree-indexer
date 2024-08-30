@@ -1,7 +1,9 @@
-import fs from "fs-extra";
 import path from "path";
+import { FileSystem, IFileSystem } from "./file-system";
 
 export class BaseDirectoryProcessor {
+  fileSystem: IFileSystem = new FileSystem();
+
   get indexFileName() {
     return ".Index.md";
   }
@@ -11,20 +13,19 @@ export class BaseDirectoryProcessor {
   }
 
   getDirectoryFiles(dirPath: string) {
-    return fs.readdirSync(dirPath);
+    return this.fileSystem.getDirectoryFiles(dirPath);
   }
 
   hasFileAtSync(filePath: string) {
-    return fs.existsSync(filePath);
+    return this.fileSystem.hasFileAtSync(filePath);
   }
 
   async hasFileAt(filePath: string) {
-    return await fs.exists(filePath);
+    return await this.fileSystem.hasFileAt(filePath);
   }
 
   isDirectory(fullPath: string) {
-    const stats = fs.statSync(fullPath);
-    return stats.isDirectory();
+    return this.fileSystem.isDirectorySync(fullPath);
   }
 
   indexMdFileNameFor(dirPath: string) {

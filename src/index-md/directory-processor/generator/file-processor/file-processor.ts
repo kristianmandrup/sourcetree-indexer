@@ -10,11 +10,12 @@ import {
   CodeAnalyzer,
   CodeSuggester,
 } from "./file-summarizer";
+import { FileSystem, IFileSystem } from "../../file-system";
 
 export class FileProcessor {
   private readonly fileSummarizer: FileSummarizer;
   private readonly nodeSummaryProcessor: NodeSummaryProcessor;
-
+  fileSystem: IFileSystem = new FileSystem();
   private indexEntries: string[] = [];
   private indexHeader: string[] = [];
   private indexFooter: string[] = [];
@@ -25,9 +26,9 @@ export class FileProcessor {
   fileSummary?: string;
   tags: string[] = [];
 
-  constructor(fileSummarizer: FileSummarizer) {
-    this.fileSummarizer = fileSummarizer;
+  constructor(fileSystem?: IFileSystem) {
     this.nodeSummaryProcessor = new NodeSummaryProcessor();
+    this.fileSystem = fileSystem || this.fileSystem;
   }
 
   get summarizer() {

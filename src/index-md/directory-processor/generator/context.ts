@@ -1,4 +1,5 @@
 import { ISummarizer } from "../../summarizer";
+import { FileSummarizer } from "./file-processor";
 
 export type GenerateRuntimeOpts = {
   toc?: boolean;
@@ -11,6 +12,7 @@ export type GenerateRuntimeOpts = {
 export class GenerateContext {
   runtimeOpts: GenerateRuntimeOpts;
   summarizer?: ISummarizer;
+  fileSummarizer?: FileSummarizer;
 
   constructor(runtimeOpts: GenerateRuntimeOpts = {}) {
     this.runtimeOpts = runtimeOpts;
@@ -23,6 +25,11 @@ export class GenerateContext {
 
   setSummarizer(summarizer: ISummarizer) {
     this.summarizer = summarizer;
+    return this;
+  }
+
+  setFileSummarizer(fileSummarizer: FileSummarizer) {
+    this.fileSummarizer = fileSummarizer;
     return this;
   }
 }
